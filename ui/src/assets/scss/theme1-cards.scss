@@ -1,0 +1,157 @@
+.card-roadmap {
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 18px !important;
+    border: 1px solid #fff;
+    color: #242828;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.card {
+    padding: 10px;
+    display: inline-flex;
+    flex-flow: row;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 18px !important;
+    border: 1px solid #fff;
+    color: #242828;
+
+    .icon {
+        background: #F2F2F2;
+        border-radius: 12px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    .title {
+        width: 100%;
+        text-align: center;
+        font-size: 1em;
+        padding-bottom: 5px;
+        border-bottom: solid 1px #F2F2F2;
+        margin-bottom: 16px;
+        line-height: 1.075;
+    }
+
+    .stats {
+        font-size: 1.5em;
+    }
+}
+
+.user-stats {
+    display: flex;
+    flex-flow: row;
+    justify-content: center;
+    column-gap: 15px;
+    margin-top: 40px;
+
+    .card {
+        display: flex;
+        flex-flow: column;
+        width: 33.334%;
+        background: #fff;
+        padding: 12px 16px 8px;
+        border-radius: 12px;
+        font-family: "Nippo";
+        font-weight: 500;
+        margin: 0;
+
+        label {
+            display: block;
+            color: #BAC2C3;
+            font-family: "Poppins";
+            font-weight: 400;
+            letter-spacing: 1px;
+            margin-top: 14px;
+        }
+    }
+}
+
+.card-col {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+
+    .card {
+        background: #fff;
+            border: 1px solid #fff;
+            border-radius: 12px !important;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        margin: 0 0 20px;
+    }
+
+    .card-body {
+        display: flex;
+        flex-flow: row;
+        align-items: center;
+        font-family: 'Nippo';
+        padding: 0 !important
+    }
+
+    .mtn-img {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        background: black;
+        margin-right: 30px;
+        overflow: hidden;
+
+        img {
+            width: 100%;
+        }
+    }
+
+    .mtn-stats {
+        display: flex;
+        flex-flow: column;
+        font-weight: 500;
+    }
+
+    .peak-name {
+        font-size: 1.5em;
+    }
+    
+    .captured-on {
+        margin-top: 2px;
+        margin-left: 8px;
+    }
+
+    .scans {
+        margin-left: 8px;
+        display: inline-flex;
+        font-size: 1em;
+        color: var(--primary-color);
+        & label:first-child {
+            margin-right: 16px;
+        }
+
+        .new-scans {
+            color: var(--highlight-color);
+        }
+
+        &::before {
+            content: "Scans:";
+            display: block;
+            color: #242828;
+            margin-right: 4px;
+        }
+    }
+}
+
+.feature-img {
+    width: 80%;
+    margin: 10px;
+    border-radius: 16px;
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+@media only screen and (max-width: 768px) {
+    .user-stats {
+        margin-top: 80px;
+    }
+}

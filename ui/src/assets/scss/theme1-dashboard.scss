@@ -1,0 +1,19 @@
+.dashboard-body {
+    margin-top: 40px;
+
+    .container .row {
+        display: flex;
+        flex-flow: column;
+    }
+}
+
+.user-stats,
+.total-peaks-card,
+.card-col {
+    width: 100%;
+    max-width: 640px;
+}
+
+.total-peaks-card .card {
+    width: 100%;
+}

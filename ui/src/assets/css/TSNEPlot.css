@@ -1,0 +1,37 @@
+:root {
+  --svg-width: 600px;
+  --svg-height: 600px;
+}
+
+.svg-container {
+  display: inline-block;
+  position: relative;
+  vertical-align: middle;
+  overflow: hidden;
+  width: var(--svg-width);
+  height: var(--svg-height);
+}
+
+.svg-content {
+  display: inline-block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tooltip {
+  /*position: absolute;*/
+  text-align: left;
+  padding: 8px;
+  font: 12px sans-serif;
+  background: white;
+  border: solid 1px #ccc;
+  border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  color: black;
+  white-space: normal;
+  width: 600px;
+}

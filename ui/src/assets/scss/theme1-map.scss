@@ -1,0 +1,32 @@
+.map-body {
+    margin: 72px auto 0;
+    height: calc(100vh - 72px);
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.map-container {
+    width: 100vw;
+    max-width: 100vw;
+    height: calc(100% - 46px);
+}
+
+.mapboxgl-canvas {
+    width: 100% !important;
+    height: unset !important;
+}
+@media only screen and (max-width: 991px) {
+    .map-body {
+        margin-top: 64px;
+        height: calc(100vh - 64px);
+    }
+
+    .mapboxgl-ctrl-top-right {
+        top: 20px;
+    }
+}

@@ -1,0 +1,27 @@
+caterpillar-api
+fastapi
+uvicorn
+#'uvicorn[standard]'
+
+django
+psycopg2-binary
+tzwhere
+pytz
+pymemcache
+boto3
+# twilio
+# sendgrid
+# pyfcm
+# discord
+
+pdftotext
+langchain
+openai
+faiss-cpu
+unstructured
+tiktoken
+rich #for console formatting
+gradio
+beautifulsoup4
+pdfminer
+chromadb

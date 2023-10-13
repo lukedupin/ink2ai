@@ -1,0 +1,120 @@
+@import 'theme1-dashboard.scss';
+@import 'theme1-profile.scss';
+@import 'theme1-map.scss';
+@import 'theme1-modal.scss';
+@import 'theme1-cards.scss';
+@import 'theme1-badges.scss';
+
+body {
+    background-color: #F8F5ED;
+}
+
+header,
+header.fixed {
+    background-color: #FFF;
+
+    .container {
+        color: #fff;
+    }
+}
+
+.menu-toggle span,
+.menu-toggle span:before,
+.menu-toggle span:after {
+    background: #7fcd00;
+    border-radius: 1px;
+    padding: 1.5px;
+}
+
+.modal {
+    background: #FFF; /*#F8F4EC;*/
+    box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.15);
+    border-radius: 18px;
+    padding: 4px 14px 4px 14px;
+    z-index: 100;
+    -ms-overflow-style: none;
+        scrollbar-width: none;
+    &--centered {
+        height: unset;
+        transform: translate(-50%, 20%);
+    }
+        &::-webkit-scrollbar {
+            display: none;
+        }
+}
+
+.blackout {
+    position: absolute;
+    left: 0px;
+    background: rgba(255,255,255,0.1) !important;
+    top: 0px;
+    height: 100%;
+    width: 100%;
+    margin: 0 0 0 0;
+    padding: 0 0 0 0;
+    overflow: hidden;
+    z-index: 50;
+    backdrop-filter: blur(10px);
+}
+
+.form-group {
+    margin-bottom: 32px;
+
+    label {
+        font-family: "Nippo";
+        text-align: left !important;
+        color: #000;
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+}
+
+.form-control {
+    border-color: #735CE3;
+
+    &:focus {
+        border-color: #735CE3;
+        box-shadow: 0px 0px 10px 1px #735CE3;
+        background: #e8f0fe;
+    }
+
+    &::placeholder {
+        color: #000 !important;
+    }
+}
+
+input {
+    border-radius: 100px !important;
+}
+
+textarea {
+    border-radius: 10px !important;
+}
+
+
+input[type="button"] {
+    background: #7FCD00;
+    color: #fff;
+    border: none;
+    width: 100%;
+    border-radius: 24px;
+    padding: 13px;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    &:hover {
+        background:#6eb300;
+    }
+}
+@media (min-width: 768px) {
+    .dashboard-body,
+        .profile {
+        margin-top: 124px;
+    }
+}
+
+@media(max-width: 350px) {
+    * {
+        font-size: 12px;
+    }
+}

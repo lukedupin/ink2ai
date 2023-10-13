@@ -1,0 +1,68 @@
+import React from 'react';
+import {
+    VStack, Box, Table, Thead, Tbody, Tr, Th, Td, useColorModeValue, Text
+} from '@chakra-ui/react';
+
+export const PatentTable = (props) => {
+    const {id, claimUids, patents, claimPatentStrengths } = props
+
+    const bg = useColorModeValue("gray.50", "gray.700");
+    const color = useColorModeValue("black", "white");
+    const selected_color = useColorModeValue("green", "white");
+
+    const hover = {
+        bg: useColorModeValue("gray.100", "gray.600"),
+        cursor: "pointer",
+        transition: "0.3s"
+    }
+
+    if ( claimUids.length <= 0 ) {
+        return (
+            <></>
+        )
+    }
+
+    //colorScheme="gray">
+    return (
+        <VStack align="start"
+                id={id}
+                spacing={3}
+                mb={6}
+                p={4}
+                bg={bg}
+                borderRadius="md"
+                boxShadow="xl"
+                borderColor="gray.200"
+                borderWidth={1}>
+            <Text fontSize="lg" fontWeight="bold" color={color}>Overlap</Text>
+            {claimUids.length > 0 &&
+            <Table variant="striped">
+                <Thead>
+                    <Tr>
+                        <Th>Patent</Th>
+                        {Object.keys(claimUids).map((key) => (
+                            <Th key={key}>{`Claim ${parseInt(key)+1}`}</Th>
+                        ))}
+                    </Tr>
+                </Thead>
+                <Tbody>
+                    {patents.map((patent) => (
+                        <Tr key={patent.uid}>
+                            <Td>{patent.code_str}</Td>
+                            {claimUids.map((claim_uid) => (
+<<<<<<< HEAD
+                                <Td key={`claim_uid_${claim_uid}`}>
+=======
+                                <Td key={claim_uid}>
+>>>>>>> 8a2aed62ee5a6f0c741f87bba50aba7da6dc7364
+                                    {((claim_uid in claimPatentStrengths) && (patent.uid in claimPatentStrengths[claim_uid]))? claimPatentStrengths[claim_uid][patent.uid] : '-'}
+                                </Td>
+                            ))}
+                        </Tr>
+                    ))}
+                </Tbody>
+            </Table>
+            }
+        </VStack>
+    );
+};

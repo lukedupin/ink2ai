@@ -1,0 +1,97 @@
+.badge-widget-container {
+    width: 100%;
+    max-width: 1200px;
+    justify-content: center;
+        padding: 20px 40px;
+        column-gap: 80px;
+        row-gap: 20px;
+}
+
+.badge-progress-wrapper {
+    width: 204px;
+    height: 204px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    margin-bottom: .5em;
+}
+
+.badge-progress {
+    width: 204px;
+    height: 204px;
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.badge-width-name {
+    font-family: "Nippo" !important;
+    font-size: 24px;
+    line-height: 1.33;
+}
+
+.progress-percent {
+    font-weight: bold;
+}
+
+/***** Progress Bar *****/
+.outer {
+    width: 204px;
+    height: 204px;
+    position: absolute;
+    padding: 4px;
+    border: 16px solid rgba(170, 178, 191, 0.35);
+    border-radius: 50%;
+}
+
+.inner {
+    width: 164px;
+    height: 164px;
+    border: 5px solid #AAB2BF;
+    border-radius: 50%;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.25);
+    background: linear-gradient(180deg, rgba(160, 128, 200, 0.3) 0%, rgba(51, 104, 181, 0.3) 100%);
+
+    img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+    }
+}
+
+.radial-progress-bar {
+    width: 188px;
+    height: 188px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-90deg);
+    fill: none;
+    stroke: #40B4B0;
+    stroke-dasharray: 450;
+    stroke-dashoffset: 270;
+    stroke-width: 8px;
+    box-sizing: content-box;
+    overflow: visible;
+    transition: 1s;
+}
+
+.badge-nav-icons {
+    font: normal normal normal 24px/1 FontAwesome;
+}
+
+.badge-nav-icon-count {
+    position: absolute;
+    /* right: 0px; */
+    top: 8px;
+    margin-left: 24px;
+    border-radius: 50%;
+    background-color: white;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--highlight-color);
+    text-align: center;
+    color: black;
+}
