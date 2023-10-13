@@ -24,7 +24,7 @@ from starlette.routing import WebSocketRoute
 
 from django.conf import settings
 
-from website.api import stable_diff_xl_ws.py
+from website.api import stable_diff_xl_ws
 
 ### Spin up the AI tasks
 
@@ -34,7 +34,7 @@ app = FastAPI()
 
 ### Websocket endpoints
 
-app.routes.append( WebSocketRoute("/ws/stable_diff_xl", stable_diff_xl.ws_entry))
+app.routes.append( WebSocketRoute("/ws/stable_diff_xl", stable_diff_xl_ws.ws_entry))
 
 ### Configure Middleware which will boot the app
 

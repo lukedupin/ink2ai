@@ -14,14 +14,11 @@ boto3
 # pyfcm
 # discord
 
-pdftotext
-langchain
-openai
-faiss-cpu
-unstructured
-tiktoken
-rich #for console formatting
-gradio
-beautifulsoup4
-pdfminer
-chromadb
+#pip3 install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu121
+
+#pip install --upgrade diffusers transformers accelerate scipy ftfy safetensors
+opencv-python
+segno
+segno-pil
+pillow
+omegaconf

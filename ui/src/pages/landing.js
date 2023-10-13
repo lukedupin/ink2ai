@@ -8,22 +8,11 @@ import {
     LinkOverlay,
     useColorModeValue, Table, Thead, Tr, Th, Tbody, Td
 } from '@chakra-ui/react';
-import TSNEPlot from "../components/TSNEPlot.js"
-import {AbstractSimInput} from "../components/abstract_sim_input"
 import * as Util from "../helpers/util.js"
-import {BannerWidget} from "../components/banner_widget";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Grid, GridItem, useBreakpointValue } from '@chakra-ui/react';
-import { History } from '../components/history';
-import { Search } from '../components/search';
-import { Overview } from "../components/overview";
 import { closeWS, connectWS, sendWS } from "../helpers/util.js";
-import { Claims } from "../components/claims";
-import { PatentTable } from "../components/patent_table";
-import {PatentAbstract} from "../components/patent_abstract";
-import { ClaimCluster } from "../components/claim_cluster";
-import { PatentDescription } from "../components/patent_description";
 import { WS_URL } from "../settings";
 
 export const Landing = (props) => {

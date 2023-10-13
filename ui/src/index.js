@@ -14,7 +14,6 @@ import { Dashboard } from "./pages/dashboard";
 import {Profile} from "./pages/profile";
 
 import { Landing } from "./pages/landing";
-import { Legislation } from "./pages/legislation";
 
 import { CommunityVoice } from "./pages/community_voice";
 import {Signup} from "./pages/signup";
@@ -166,10 +165,10 @@ export const Core = (props) => {
 
         //Title controls
         if ( path == 'landing' || path == '' ) {
-            document.title = `Landscape.chat`
+            document.title = `Ink2Ai`
         }
         else {
-            document.title = `Landscape.chat | ${Util.namify( path )}`
+            document.title = `Ink2Ai | ${Util.namify( path )}`
         }
 
         //Ensure we can scroll, this is an issue if a modal was opened and the user navs away
@@ -221,10 +220,6 @@ export const Core = (props) => {
                 }/>
                 <Route path="/privacy-policy" element={
                     <PrivacyPolicy
-                        showToast={handleToast} />
-                }/>
-                <Route path="/legislation/:legislation_uid" element={
-                    <Legislation
                         showToast={handleToast} />
                 }/>
                 <Route path='*' element={
