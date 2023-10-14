@@ -33,6 +33,7 @@ export const Landing = (props) => {
         prompt: "",
         negative: "low quality, bad quality, sketches",
         cn_weight: 500,
+        cn_steps: 35,
         cn_start: 0,
         cn_end: 100,
         filename: '',
@@ -41,7 +42,7 @@ export const Landing = (props) => {
         result_size: 0,
         result_images: [],
     })
-    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_start, cn_end, filename, raw_file, usr_img, result_size, result_images } = state
+    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, raw_file, usr_img, result_size, result_images } = state
 
     const [socket, setSocket] = useState(null);
 
@@ -67,7 +68,7 @@ export const Landing = (props) => {
         const _socket = connectWS( `${WS_URL}/ws/stable_diff_xl`, setSocket, {
             'sdxl_ready': recvSdxlReady,
             'sdxl_user_image': recvSdxlUserImage,
-            'sdxl_filesize': recvSdxlFilesize,
+            'sdxl_file_size': recvSdxlFilesize,
             'file': binSdlxFile,
         })
 
@@ -100,18 +101,23 @@ export const Landing = (props) => {
     }
 
     const binSdlxFile = ( data ) => {
-        const current = fileData.reduce(x => x.byteLength ) + data.byteLength
+        const current = fileData.reduce((sum, x) => sum + x.byteLength, 0 ) + data.byteLength
 
         //Store data until we have everything
         if ( result_size != 0 && current < result_size ) {
+            console.log(data)
             setFileData( prev => ([...prev, data]) )
         }
         //We have everything, display the image
         else {
+            console.log( fileData)
+            console.log( data)
             const buffer = combineArrayBuffers( [...fileData, data])
+            console.log( buffer )
             const blob = new Blob([buffer], { type: 'image/png' });
+            console.log(blob)
             setState(prev => ({...prev,
-                result_images: [...prev.result_images, URL.createObjectURL(blob)],
+                result_images: [ URL.createObjectURL(blob), ...prev.result_images ],
             }))
         }
     }
@@ -196,6 +202,7 @@ export const Landing = (props) => {
         Util.sendWS( socket, 'sdxl_generate', {
             prompt,
             negative,
+            cn_steps,
             cn_weight: cn_weight / 1000,
             cn_start: cn_start / 100,
             cn_end: cn_end / 100,
@@ -248,7 +255,7 @@ export const Landing = (props) => {
                                 borderColor="gray.200"
                                 borderWidth={1}>
                             <Text fontSize="lg" fontWeight="bold" color={color}>
-                                Upload your image (Image will be resized to 1024x1024)
+                                Upload your PNG (resized to 512x512)
                             </Text>
                             <input
                                 type='file'
@@ -279,6 +286,8 @@ export const Landing = (props) => {
                             <Text fontSize="lg" fontWeight="bold" mb={6} color={color}>
                                 Tuning param
                             </Text>
+
+
                             <Text fontSize="sm" fontWeight="bold" color={color}>
                                 CN Weight
                             </Text>
@@ -318,6 +327,21 @@ export const Landing = (props) => {
                                 marker_cb={ (value) => value + "%" }
                                 onChange={handleChange}
                             />
+
+                            <Text fontSize="sm" fontWeight="bold" color={color}>
+                                Steps (More is slower)
+                            </Text>
+                            <Slidey
+                                id={"cn_steps"}
+                                value={cn_steps}
+                                min={5}
+                                max={50}
+                                marker_start_end={true}
+                                markers={6}
+                                marker_cb={ (value) => Math.floor(value) }
+                                onChange={handleChange}
+                            />
+
                         </VStack>
                     </GridItem>
                 </Grid>
@@ -356,7 +380,7 @@ export const Landing = (props) => {
                     onClick={handleRunSDXL}>
                     Generate Image
                 </Button>
-                <HStack align="start"
+                <VStack align="start"
                         spacing={3}
                         mb={6}
                         p={4}
@@ -366,11 +390,15 @@ export const Landing = (props) => {
                         boxShadow="xl"
                         borderColor="gray.200"
                         borderWidth={1}>
-                    {result_images.map( (img, i) => (<>
-                        <Image src={img} alt='SD XL' key={`result_${i}`} />
+                    {result_images.map( (img, i) => (
+                    <GridItem key={`sd_img_${i}`} as="main" p={4}>
+                        <a href={img} target="_blank">
+                            <Image src={img} alt='SD XL' key={`result_${i}`} />
+                        </a>
                         <a href={img} download={`result_${i}.png`}>Download</a>
-                    </>))}
-                </HStack>
+                    </GridItem>
+                    ))}
+                </VStack>
             </GridItem>
         </Grid>
     );

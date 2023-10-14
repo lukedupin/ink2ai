@@ -19,8 +19,13 @@ export const connectWS = (url, setSocket, routes={}, failure=null) => {
     //Handle routes from the server
     socket.onmessage = (event) => {
         //Binary
-        if (event instanceof Blob) {
-            routes['file']( event )
+        if (event.data instanceof Blob) {
+            // Assuming you have a Blob named 'blob'
+            const fileReader = new FileReader();
+            fileReader.onload = (event) => {
+                routes['file']( new Uint8Array( event.target.result ))
+            };
+            fileReader.readAsArrayBuffer(event.data);
             return
         }
 
@@ -123,6 +128,10 @@ export const combineArrayBuffers = (arrayBuffers) => {
 
     // Create a view into the combined buffer
     const combinedView = new Uint8Array(combinedBuffer);
+
+    console.log( totalLength )
+    console.log( combinedBuffer )
+    console.log( combinedView )
 
     // Copy each array buffer into the combined buffer
     let offset = 0;
