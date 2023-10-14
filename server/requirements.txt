@@ -22,3 +22,4 @@ segno
 segno-pil
 pillow
 omegaconf
+xformers

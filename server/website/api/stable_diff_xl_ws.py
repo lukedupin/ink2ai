@@ -6,6 +6,7 @@ from website.helpers import ws, util
 
 import io
 
+from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, AutoencoderKL
 from diffusers.utils import load_image
 import numpy as np
@@ -30,6 +31,7 @@ class State(ws.WsState):
         self.cn_end = 1.0
 
 
+'''
 pipeline = None
 def getPipeline():
     global pipeline
@@ -76,10 +78,61 @@ def run_pipeline( state: State ):
         control_guidance_start=state.cn_start,
         control_guidance_end=state.cn_end,
         num_images_per_prompt=30,
-        width=768,#1024,
-        height=768,#1024,
+        width=512,#1024,
+        height=512,#1024,
         image=state.image
     ).images[0]
+'''
+
+pipeline = None
+def getPipeline():
+    global pipeline
+    if pipeline is not None:
+        return pipeline['pipeline']
+
+    controlnet = ControlNetModel.from_pretrained(
+        "lllyasviel/sd-controlnet-canny", torch_dtype=torch.float32
+    )
+
+    model_id = "sdvn53dcutewave_v10.safetensors"
+    model_id = "cyberrealistic_v33.safetensors"
+    model_id = "epicrealism_naturalSinRC1VAE.safetensors"
+    # model_id = "Lykon/DreamShaper"
+    # model_id = "runwayml/stable-diffusion-v1-5"
+    # pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
+    pipe = StableDiffusionControlNetPipeline.from_single_file(
+    #pipe = StableDiffusionControlNetPipeline.from_pretrained(
+        model_id,
+        controlnet=controlnet,
+        safety_checker=None,
+        safetensors=True,
+        torch_dtype=torch.float32
+    )
+
+    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
+
+    # Remove if you do not have xformers installed
+    # see https://huggingface.co/docs/diffusers/v0.13.0/en/optimization/xformers#installing-xformers
+    # for installation instructions
+    pipe.enable_xformers_memory_efficient_attention()
+
+    pipe.enable_model_cpu_offload()
+
+    pipeline = {
+        'pipeline': pipe,
+        'controlnet': controlnet
+    }
+    return pipeline['pipeline']
+
+def run_pipeline( state: State ):
+    pipe = getPipeline()
+    return pipe(state.prompt,
+                state.image,
+                negative_prompt=state.negative_prompt,
+                controlnet_conditioning_scale=state.cn_weight,
+                control_guidance_start=state.cn_start,
+                control_guidance_end=state.cn_end,
+                num_inference_steps=20).images[0]
 
 
 async def sdxl_init(state: State ):
@@ -125,7 +178,7 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_weight: fl
         await state.sock.send_json({ 'ep': 'sdxl_filesize', 'file_size': file_size })
 
         # get canny image
-        image = cv2.resize(image, (768, 768))#(1024, 1024))
+        image = cv2.resize(image, (512, 512))#(1024, 1024))
         n_image = np.array(image)
         n_image = cv2.Canny(n_image, 100, 200)
         n_image = n_image[:, :, None]
