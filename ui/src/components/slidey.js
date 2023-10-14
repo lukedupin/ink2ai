@@ -2,8 +2,10 @@ import {Box, Slider, SliderFilledTrack, SliderMark, SliderThumb, SliderTrack} fr
 
 
 export const Slidey = props => {
-  const { id, value, min, max, markers } = props
+  const { id, value, min, max, markers, marker_cb } = props
   const { onChange } = props
+
+  const marker_start_end = !!props.marker_start_end
 
   const labelStyles = {
     mt: '2',
@@ -11,12 +13,23 @@ export const Slidey = props => {
     fontSize: 'sm',
   }
 
+  const clean_markers = []
+  for ( let i = 0; i < markers; i++ ) {
+    const value = ( marker_start_end )? i * ((max - min) / (markers - 1)): (i + 1) * ((max - min) / (markers + 1))
+    clean_markers.push( value )
+  }
+
   return (
     <Box pt={6} pb={2} width="full">
-      <Slider aria-label='slider-ex-6' min={min} max={max} width={"full"} onChange={(value) => onChange({target: { id, value }})}>
-        {markers.map((mark, i) => (
-        <SliderMark key={`marker_${i}`} value={mark} {...labelStyles}>
-          {mark}
+      <Slider aria-label='slider-ex-6'
+              width="full"
+              max={max}
+              min={min}
+              value={value}
+              onChange={(value) => onChange({target: { id, value }})}>
+        {clean_markers.map((marker, i) => (
+        <SliderMark key={`marker_${i}`} value={marker} {...labelStyles}>
+          {marker_cb( marker )}
         </SliderMark>
         ))}
         <SliderMark
@@ -28,7 +41,7 @@ export const Slidey = props => {
           ml='-5'
           w='12'
         >
-          {value}
+          {marker_cb(value)}
         </SliderMark>
         <SliderTrack>
           <SliderFilledTrack />

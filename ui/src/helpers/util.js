@@ -61,6 +61,45 @@ export const sendWS = (socket, ep, params) => {
     return socket.send( JSON.stringify({ ep, params }) )
 }
 
+export const sendFileWS = ( socket, file, callback=null ) => {
+    const reader = new FileReader();
+
+    //Default callback
+    if ( callback == null ) {
+        callback = (prog) => { console.log("Progress: " + prog) }
+    }
+
+    reader.onload = function(event) {
+        console.log("Sending file...")
+
+        const buffer = event.target.result
+        const chunkSize = 1024 * 1024 // 1 MB
+
+        //Send out chunks
+        for (let offset = 0; offset < buffer.byteLength; offset += chunkSize) {
+            const size = Math.min(chunkSize, buffer.byteLength - offset)
+            const chunk = new Uint8Array(buffer, offset, size)
+            socket.send(chunk)
+
+            callback( (offset / buffer.byteLength) * 100 )
+        }
+
+        callback( 100 )
+    }
+
+    /*
+    reader.onprogress = function(event) {
+        console.log("Prog...")
+        if (callback != null && event.lengthComputable) {
+            callback( (event.loaded / event.total) * 100 )
+        }
+    };
+    */
+
+    console.log("Read as binary....")
+    reader.readAsArrayBuffer(file)
+}
+
 export const closeWS = (socket) => {
     if ( socket ) {
         socket.close()

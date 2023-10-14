@@ -30,10 +30,16 @@ export const Landing = (props) => {
         cn_weight: 500,
         cn_start: 0,
         cn_end: 100,
+        filename: '',
+        raw_file: null,
+        usr_img: null,
     })
-    const { connected, prompt, negative, cn_weight, cn_start, cn_end } = state
+    const { connected, prompt, negative, cn_weight, cn_start, cn_end, filename, raw_file, usr_img } = state
 
     const [socket, setSocket] = useState(null);
+
+    //File ref required to access the file browser
+    const fileRef = React.useRef();
 
     const [scrollPosition, setScrollPosition] = useState(0);
     const handleScroll = () => {
@@ -49,7 +55,7 @@ export const Landing = (props) => {
     }, []);
 
     useEffect(() => {
-        const _socket = connectWS( `${WS_URL}/ws/legislation_chat`, setSocket, {
+        const _socket = connectWS( `${WS_URL}/ws/stable_diff_xl`, setSocket, {
             'sdxl_ready': recvSdxlReady,
             'sdxl_image': recvSdxlImage,
         })
@@ -83,6 +89,66 @@ export const Landing = (props) => {
         }))
     }
 
+    //Funky pass through to open the file browse
+    const handleFileClick = () => {
+        if ( !connected ) {
+            showToast( 'Not connected', 'failure');
+            return;
+        }
+
+        fileRef.current.value = null;
+        fileRef.current.click();
+    };
+
+    //We have a selected file
+    const handleFileChange = e => {
+        if ( !connected ) {
+            showToast( 'Not connected', 'failure')
+            return;
+        }
+
+        const raw_file = e.target.files[0];
+
+        // Check file size
+        const file_mb = raw_file.size / (1024 * 1024)
+        console.log( file_mb )
+        if ( file_mb > 150 ) {
+            showToast( 'Files need to be less than 150MB', 'failure')
+            return
+        }
+        else if ( file_mb > 100 ) {
+            showToast( 'Files larger than 100MB impacts performance', 'failure')
+        }
+
+        //Start the upload
+        handleUpload( raw_file )
+
+        //update the state
+        setState(prev => ({...prev,
+            filename: raw_file.name,
+            raw_file,
+            usr_img: URL.createObjectURL( raw_file ),
+        }))
+    };
+
+    const handleUpload = ( raw_file ) => {
+        if ( !connected ) {
+            showToast( 'Not connected', 'failure')
+            return;
+        }
+
+        // Check file size
+        const file_mb = raw_file.size / (1024 * 1024)
+        if ( file_mb > 150 ) {
+            return
+        }
+
+        //Open the file
+        Util.sendWS( socket, 'open_file', { file_size: raw_file.size })
+
+        Util.sendFileWS( socket, raw_file )
+    };
+
     const bg = useColorModeValue("gray.50", "gray.700");
     const color = useColorModeValue("black", "white");
     const selected_color = useColorModeValue("green", "white");
@@ -107,12 +173,20 @@ export const Landing = (props) => {
                             <Text fontSize="lg" fontWeight="bold" color={color}>
                                 Upload your image (Image will be resized to 1024x1024)
                             </Text>
+                            <input
+                                type='file'
+                                ref={fileRef}
+                                onChange={handleFileChange}
+                                style={{ display: "none" }}
+                            />
+                            <Button onClick={handleFileClick}>
+                                Choose File
+                            </Button>
                             <Box boxSize='sm'>
-                                <Image src='' alt='Dan Abramov' />
+                                <Image src={usr_img} alt='Dan Abramov' />
                             </Box>
                         </VStack>
                     </GridItem>
-
 
                     <GridItem>
                         <VStack align="start"
@@ -133,7 +207,9 @@ export const Landing = (props) => {
                                 value={cn_weight}
                                 min={0}
                                 max={5000}
-                                markers={[1,2,3,4]}
+                                marker_start_end={true}
+                                markers={6}
+                                marker_cb={ (value) => value / 1000 }
                                 onChange={handleChange}
                             />
 
@@ -145,7 +221,8 @@ export const Landing = (props) => {
                                 value={cn_start}
                                 min={0}
                                 max={100}
-                                markers={["25%", "50%", "75%"]}
+                                markers={3}
+                                marker_cb={ (value) => value + "%" }
                                 onChange={handleChange}
                             />
 
@@ -157,7 +234,8 @@ export const Landing = (props) => {
                                 value={cn_end}
                                 min={0}
                                 max={100}
-                                markers={["25%", "50%", "75%"]}
+                                markers={3}
+                                marker_cb={ (value) => value + "%" }
                                 onChange={handleChange}
                             />
                         </VStack>

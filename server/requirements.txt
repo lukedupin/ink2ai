@@ -1,7 +1,7 @@
 caterpillar-api
 fastapi
 uvicorn
-#'uvicorn[standard]'
+#pip install 'uvicorn[standard]'
 
 django
 psycopg2-binary
