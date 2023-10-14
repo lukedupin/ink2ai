@@ -67,7 +67,7 @@ export const Landing = (props) => {
         const _socket = connectWS( `${WS_URL}/ws/stable_diff_xl`, setSocket, {
             'sdxl_ready': recvSdxlReady,
             'sdxl_user_image': recvSdxlUserImage,
-            'sdxl_filesize': recvSdxlFilesize,
+            'sdxl_file_size': recvSdxlFilesize,
             'file': binSdlxFile,
         })
 
@@ -100,16 +100,21 @@ export const Landing = (props) => {
     }
 
     const binSdlxFile = ( data ) => {
-        const current = fileData.reduce(x => x.byteLength ) + data.byteLength
+        const current = fileData.reduce((sum, x) => sum + x.byteLength, 0 ) + data.byteLength
 
         //Store data until we have everything
         if ( result_size != 0 && current < result_size ) {
+            console.log(data)
             setFileData( prev => ([...prev, data]) )
         }
         //We have everything, display the image
         else {
+            console.log( fileData)
+            console.log( data)
             const buffer = combineArrayBuffers( [...fileData, data])
+            console.log( buffer )
             const blob = new Blob([buffer], { type: 'image/png' });
+            console.log(blob)
             setState(prev => ({...prev,
                 result_images: [...prev.result_images, URL.createObjectURL(blob)],
             }))
@@ -366,10 +371,12 @@ export const Landing = (props) => {
                         boxShadow="xl"
                         borderColor="gray.200"
                         borderWidth={1}>
-                    {result_images.map( (img, i) => (<>
+                    {result_images.map( (img, i) => (
+                    <GridItem key={`sd_img_${i}`} as="main" p={4}>
                         <Image src={img} alt='SD XL' key={`result_${i}`} />
                         <a href={img} download={`result_${i}.png`}>Download</a>
-                    </>))}
+                    </GridItem>
+                    ))}
                 </HStack>
             </GridItem>
         </Grid>
