@@ -20,12 +20,14 @@ from PIL import Image
 class State(ws.WsState):
     def __init__(self, websocket: WebSocket):
         super().__init__(websocket)
-        self.prompt = None
-        self.negative_prompt = "low quality, bad quality, sketches"
         self.image = None
         self.handle = BytesIO()
         self.data_loaded = 0
         self.file_size = 0
+
+        self.prompt = None
+        self.negative_prompt = "low quality, bad quality, sketches"
+        self.cn_steps = 35
         self.cn_weight = 0.5  # recommended for good generalization
         self.cn_start = 0.0
         self.cn_end = 1.0
@@ -114,9 +116,11 @@ def getPipeline():
     # Remove if you do not have xformers installed
     # see https://huggingface.co/docs/diffusers/v0.13.0/en/optimization/xformers#installing-xformers
     # for installation instructions
-    pipe.enable_xformers_memory_efficient_attention()
+    #pipe.enable_xformers_memory_efficient_attention()
 
     pipe.enable_model_cpu_offload()
+
+    pipe.safety_checker = lambda images, **kwargs: (images, [False for _ in range(len(images))])
 
     pipeline = {
         'pipeline': pipe,
@@ -126,13 +130,20 @@ def getPipeline():
 
 def run_pipeline( state: State ):
     pipe = getPipeline()
-    return pipe(state.prompt,
+
+    image = pipe(state.prompt,
                 state.image,
+                width=512, height=512,
                 negative_prompt=state.negative_prompt,
                 controlnet_conditioning_scale=state.cn_weight,
                 control_guidance_start=state.cn_start,
                 control_guidance_end=state.cn_end,
-                num_inference_steps=20).images[0]
+                num_inference_steps=state.cn_steps).images[0]
+
+    state.image.save("/tmp/canny.png")
+    image.save("/tmp/image.png")
+
+    return image
 
 
 async def sdxl_init(state: State ):
@@ -157,9 +168,10 @@ async def sdxl_user_file_size( state: State, file_size: int ):
     state.handle = BytesIO()
 
 
-async def sdxl_generate( state: State, prompt: str, negative: str, cn_weight: float, cn_start: float, cn_end: float):
+async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float):
     state.prompt = prompt
     state.negative_prompt = negative
+    state.cn_steps = cn_steps
     state.cn_weight = cn_weight
     state.cn_start = cn_start
     state.cn_end = cn_end
@@ -175,15 +187,8 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_weight: fl
     with BytesIO() as byte_stream:
         image.save(byte_stream, format='PNG')
         file_size = len(byte_stream.getvalue())
-        await state.sock.send_json({ 'ep': 'sdxl_filesize', 'file_size': file_size })
+        await ws.succ_js(state, 'sdxl_file_size', { 'file_size': file_size })
 
-        # get canny image
-        image = cv2.resize(image, (512, 512))#(1024, 1024))
-        n_image = np.array(image)
-        n_image = cv2.Canny(n_image, 100, 200)
-        n_image = n_image[:, :, None]
-        n_image = np.concatenate([n_image, n_image, n_image], axis=2)
-        state.image = Image.fromarray(n_image)
 
         # Send the image
         sent = 0
@@ -203,8 +208,15 @@ async def process_file(state: State, data: bytes ):
 
     # Load the image
     state.handle.seek(0)
-    state.image = Image.open( state.handle)
-    state.image.save('/tmp/test.png')
+    image = Image.open( state.handle)
+
+    # get canny image
+    image = image.resize((512, 512))#(1024, 1024))
+    n_image = np.array(image)
+    n_image = cv2.Canny(n_image, 100, 200)
+    n_image = n_image[:, :, None]
+    n_image = np.concatenate([n_image, n_image, n_image], axis=2)
+    state.image = Image.fromarray(n_image)
 
     return 'sdxl_user_image', { 'status': 'complete' }
 
