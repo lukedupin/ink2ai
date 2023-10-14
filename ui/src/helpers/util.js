@@ -18,6 +18,12 @@ export const connectWS = (url, setSocket, routes={}, failure=null) => {
 
     //Handle routes from the server
     socket.onmessage = (event) => {
+        //Binary
+        if (event instanceof Blob) {
+            routes['file']( event )
+            return
+        }
+
         const { ep, succ, resp } = JSON.parse( event.data )
 
         //Failure, quit
@@ -104,6 +110,28 @@ export const closeWS = (socket) => {
     if ( socket ) {
         socket.close()
     }
+}
+
+export const combineArrayBuffers = (arrayBuffers) => {
+    // Calculate the total length of all the array buffers
+    const totalLength = arrayBuffers.reduce(function(sum, buffer) {
+        return sum + buffer.byteLength;
+    }, 0);
+
+    // Create a new ArrayBuffer with the total length
+    const combinedBuffer = new ArrayBuffer(totalLength);
+
+    // Create a view into the combined buffer
+    const combinedView = new Uint8Array(combinedBuffer);
+
+    // Copy each array buffer into the combined buffer
+    let offset = 0;
+    arrayBuffers.forEach(function(buffer) {
+        combinedView.set(new Uint8Array(buffer), offset);
+        offset += buffer.byteLength;
+    });
+
+    return combinedBuffer;
 }
 
 export const fetch_js = (url, js, succ, err) => {

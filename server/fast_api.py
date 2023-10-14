@@ -39,3 +39,7 @@ app.routes.append( WebSocketRoute("/ws/stable_diff_xl", stable_diff_xl_ws.ws_ent
 ### Configure Middleware which will boot the app
 
 app.add_middleware( CORSMiddleware, **settings.FAST_API )
+
+
+### Warm up SDXL pipeline
+stable_diff_xl_ws.getPipeline()

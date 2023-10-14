@@ -13,7 +13,11 @@ import * as Util from "../helpers/util.js"
 import { Link, useNavigate } from "react-router-dom";
 
 import { Grid, GridItem, useBreakpointValue } from '@chakra-ui/react';
-import { closeWS, connectWS, sendWS } from "../helpers/util.js";
+import {
+    closeWS, combineArrayBuffers,
+    connectWS,
+    sendWS
+} from "../helpers/util.js";
 import { WS_URL } from "../settings";
 import {Button} from "react-bootstrap";
 
@@ -24,6 +28,7 @@ export const Landing = (props) => {
     const {showToast} = props
 
     const [state, setState] = useState({
+        sdxl_loaded: false,
         connected: false,
         prompt: "",
         negative: "low quality, bad quality, sketches",
@@ -33,10 +38,14 @@ export const Landing = (props) => {
         filename: '',
         raw_file: null,
         usr_img: null,
+        result_size: 0,
+        result_images: [],
     })
-    const { connected, prompt, negative, cn_weight, cn_start, cn_end, filename, raw_file, usr_img } = state
+    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_start, cn_end, filename, raw_file, usr_img, result_size, result_images } = state
 
     const [socket, setSocket] = useState(null);
+
+    const [fileData, setFileData] = useState([]); // File data in base64 format
 
     //File ref required to access the file browser
     const fileRef = React.useRef();
@@ -57,7 +66,9 @@ export const Landing = (props) => {
     useEffect(() => {
         const _socket = connectWS( `${WS_URL}/ws/stable_diff_xl`, setSocket, {
             'sdxl_ready': recvSdxlReady,
-            'sdxl_image': recvSdxlImage,
+            'sdxl_user_image': recvSdxlUserImage,
+            'sdxl_filesize': recvSdxlFilesize,
+            'file': binSdlxFile,
         })
 
         //Track the state of the socket
@@ -76,10 +87,33 @@ export const Landing = (props) => {
     }, []);
 
     const recvSdxlReady = () => {
+        setState(prev => ({ ...prev, sdxl_loaded: true }))
         console.log("Ready")
     }
 
-    const recvSdxlImage = ( image ) => {
+    const recvSdxlUserImage = ({status}) => {
+        console.log( status )
+    }
+
+    const recvSdxlFilesize = ({file_size}) => {
+        setState(prev => ({ ...prev, result_size: file_size }))
+    }
+
+    const binSdlxFile = ( data ) => {
+        const current = fileData.reduce(x => x.byteLength ) + data.byteLength
+
+        //Store data until we have everything
+        if ( result_size != 0 && current < result_size ) {
+            setFileData( prev => ([...prev, data]) )
+        }
+        //We have everything, display the image
+        else {
+            const buffer = combineArrayBuffers( [...fileData, data])
+            const blob = new Blob([buffer], { type: 'image/png' });
+            setState(prev => ({...prev,
+                result_images: [...prev.result_images, URL.createObjectURL(blob)],
+            }))
+        }
     }
 
     const handleChange = (e) => {
@@ -143,11 +177,30 @@ export const Landing = (props) => {
             return
         }
 
-        //Open the file
-        Util.sendWS( socket, 'open_file', { file_size: raw_file.size })
+        Util.sendWS( socket, 'sdxl_user_file_size', { file_size: raw_file.size })
 
         Util.sendFileWS( socket, raw_file )
     };
+
+    const handleRunSDXL = () => {
+        if ( !connected || !sdxl_loaded ) {
+            showToast( 'Not connected', 'failure')
+            return;
+        }
+
+        if ( !raw_file ) {
+            showToast( 'No file selected', 'failure')
+            return;
+        }
+
+        Util.sendWS( socket, 'sdxl_generate', {
+            prompt,
+            negative,
+            cn_weight: cn_weight / 1000,
+            cn_start: cn_start / 100,
+            cn_end: cn_end / 100,
+        })
+    }
 
     const bg = useColorModeValue("gray.50", "gray.700");
     const color = useColorModeValue("black", "white");
@@ -155,6 +208,30 @@ export const Landing = (props) => {
 
     const gap = 2
     const templateColumns = useBreakpointValue({ base: "2fr", md: `${gap}fr ${gap}fr` })
+
+    if ( !connected ) {
+        return (
+            <Grid templateRows="auto 1fr" mt={36} mb={24}>
+                <GridItem as="main" p={4}>
+                    <Text fontSize="lg" fontWeight="bold" color="red">
+                        Server connection error
+                    </Text>
+                </GridItem>
+            </Grid>
+        )
+    }
+
+    if ( connected && !sdxl_loaded ) {
+        return (
+            <Grid templateRows="auto 1fr" mt={36} mb={24}>
+                <GridItem as="main" p={4}>
+                    <Text fontSize="lg" fontWeight="bold" color={color}>
+                        SD XL warming up... This might take 30 seconds...
+                    </Text>
+                </GridItem>
+            </Grid>
+        )
+    }
 
     return (
         <Grid templateRows="auto 1fr" mt={36} mb={24}>
@@ -183,7 +260,7 @@ export const Landing = (props) => {
                                 Choose File
                             </Button>
                             <Box boxSize='sm'>
-                                <Image src={usr_img} alt='Dan Abramov' />
+                                <Image src={usr_img} alt='Your hand drawn image' />
                             </Box>
                         </VStack>
                     </GridItem>
@@ -199,7 +276,10 @@ export const Landing = (props) => {
                                 boxShadow="xl"
                                 borderColor="gray.200"
                                 borderWidth={1}>
-                            <Text fontSize="lg" fontWeight="bold" color={color}>
+                            <Text fontSize="lg" fontWeight="bold" mb={6} color={color}>
+                                Tuning param
+                            </Text>
+                            <Text fontSize="sm" fontWeight="bold" color={color}>
                                 CN Weight
                             </Text>
                             <Slidey
@@ -213,7 +293,7 @@ export const Landing = (props) => {
                                 onChange={handleChange}
                             />
 
-                            <Text fontSize="lg" fontWeight="bold" color={color}>
+                            <Text fontSize="sm" fontWeight="bold" color={color}>
                                 CN Start
                             </Text>
                             <Slidey
@@ -226,7 +306,7 @@ export const Landing = (props) => {
                                 onChange={handleChange}
                             />
 
-                            <Text fontSize="lg" fontWeight="bold" color={color}>
+                            <Text fontSize="sm" fontWeight="bold" color={color}>
                                 CN End
                             </Text>
                             <Slidey
@@ -272,7 +352,8 @@ export const Landing = (props) => {
 
             <GridItem as="main" p={4} width="full">
                 <Button
-                    variant="primary">
+                    variant="primary"
+                    onClick={handleRunSDXL}>
                     Generate Image
                 </Button>
                 <HStack align="start"
@@ -285,9 +366,10 @@ export const Landing = (props) => {
                         boxShadow="xl"
                         borderColor="gray.200"
                         borderWidth={1}>
-                    <Text fontSize="lg" fontWeight="bold" color={color}>
-                        Platform Analysis
-                    </Text>
+                    {result_images.map( (img, i) => (<>
+                        <Image src={img} alt='SD XL' key={`result_${i}`} />
+                        <a href={img} download={`result_${i}.png`}>Download</a>
+                    </>))}
                 </HStack>
             </GridItem>
         </Grid>
