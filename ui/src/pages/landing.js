@@ -113,7 +113,6 @@ export const Landing = (props) => {
     }
 
     const recvSdxlProgress = ({progress}) => {
-        console.log(progress)
         setProgress( progress )
     }
 
@@ -414,7 +413,12 @@ export const Landing = (props) => {
                         borderColor="gray.200"
                         borderWidth={1}>
                     {progress >= 0 &&
-                        <Progress hasStripe value={progress} />
+                        <GridItem as="main" p={4}>
+                            <Text fontSize="sm" fontWeight="bold" color={color}>
+                                {(progress == 0)? "Waiting to start": "Generating Image"}
+                            </Text>
+                            <Progress width="full" hasStripe value={progress} />
+                        </GridItem>
                     }
                     {result_images.map( (img, i) => (
                     <GridItem key={`sd_img_${i}`} as="main" p={4}>

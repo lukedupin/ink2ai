@@ -146,7 +146,6 @@ def run_pipeline( state: State ):
         control_guidance_end=state.cn_end,
         num_inference_steps=state.cn_steps,
         callback=lambda step, ts, latent: asyncio.run(progress_update( int(100 * (step / state.cn_steps)) )),
-        callback_steps=3,
         ).images[0]
 
     #state.image.save("/tmp/canny.png")
