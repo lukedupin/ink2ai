@@ -6,7 +6,16 @@ import {
     Text,
     LinkBox,
     LinkOverlay,
-    useColorModeValue, Table, Thead, Tr, Th, Tbody, Td, Textarea, HStack
+    useColorModeValue,
+    Table,
+    Thead,
+    Tr,
+    Th,
+    Tbody,
+    Td,
+    Textarea,
+    HStack,
+    Progress
 } from '@chakra-ui/react';
 import { Image } from '@chakra-ui/react'
 import * as Util from "../helpers/util.js"
@@ -32,7 +41,7 @@ export const Landing = (props) => {
         connected: false,
         prompt: "",
         negative: "low quality, bad quality, sketches",
-        cn_weight: 500,
+        cn_weight: 900,
         cn_steps: 35,
         cn_start: 0,
         cn_end: 100,
@@ -47,6 +56,8 @@ export const Landing = (props) => {
     const [socket, setSocket] = useState(null);
 
     const [fileData, setFileData] = useState([]); // File data in base64 format
+
+    const [progress, setProgress] = useState(-1); // Progress of file upload
 
     //File ref required to access the file browser
     const fileRef = React.useRef();
@@ -69,6 +80,7 @@ export const Landing = (props) => {
             'sdxl_ready': recvSdxlReady,
             'sdxl_user_image': recvSdxlUserImage,
             'sdxl_file_size': recvSdxlFilesize,
+            'sdxl_progress': recvSdxlProgress,
             'file': binSdlxFile,
         })
 
@@ -98,6 +110,11 @@ export const Landing = (props) => {
 
     const recvSdxlFilesize = ({file_size}) => {
         setState(prev => ({ ...prev, result_size: file_size }))
+    }
+
+    const recvSdxlProgress = ({progress}) => {
+        console.log(progress)
+        setProgress( progress )
     }
 
     const binSdlxFile = ( data ) => {
@@ -289,13 +306,13 @@ export const Landing = (props) => {
 
 
                             <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN Weight
+                                CN Weight (How much to use your drawing)
                             </Text>
                             <Slidey
                                 id={"cn_weight"}
                                 value={cn_weight}
                                 min={0}
-                                max={5000}
+                                max={3000}
                                 marker_start_end={true}
                                 markers={6}
                                 marker_cb={ (value) => value / 1000 }
@@ -303,7 +320,7 @@ export const Landing = (props) => {
                             />
 
                             <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN Start
+                                CN Start (% to start using your drawing)
                             </Text>
                             <Slidey
                                 id={"cn_start"}
@@ -316,7 +333,7 @@ export const Landing = (props) => {
                             />
 
                             <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN End
+                                CN End (% to stop using your drawing)
                             </Text>
                             <Slidey
                                 id={"cn_end"}
@@ -362,6 +379,12 @@ export const Landing = (props) => {
                                 borderWidth={1}>
                             <Text fontSize="lg" fontWeight="bold" color={color}>
                                 {Util.capitalize(id)}
+                                {id == 'prompt' &&
+                                    <> (Describe the image you want)</>
+                                }
+                                {id == 'negative' &&
+                                    <> (Things you don't want in your image)</>
+                                }
                             </Text>
                             <Textarea
                                 id={id}
@@ -390,6 +413,9 @@ export const Landing = (props) => {
                         boxShadow="xl"
                         borderColor="gray.200"
                         borderWidth={1}>
+                    {progress >= 0 &&
+                        <Progress hasStripe value={progress} />
+                    }
                     {result_images.map( (img, i) => (
                     <GridItem key={`sd_img_${i}`} as="main" p={4}>
                         <a href={img} target="_blank">

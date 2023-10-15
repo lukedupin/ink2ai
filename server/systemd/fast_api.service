@@ -1,15 +1,14 @@
 [Unit]
 Description=Run the node server
-Documentation=/opt/patent/server/README.md
+Documentation=/opt/ink2ai/server/README.md
 After=network.target
 
 [Service]
 Type=simple
 User=root
-#ExecStart=uvicorn main:app --host 0.0.0.0 --port 8000
-ExecStart=uvicorn main:app --host 147.182.249.129 --port 8000 --ssl-keyfile /etc/letsencrypt/live/landscape.chat/privkey.pem --ssl-certfile /etc/letsencrypt/live/landscape.chat/fullchain.pem
+ExecStart=uvicorn fast_api:app --host 0.0.0.0 --port 8081 --ssl-keyfile /etc/letsencrypt/live/ink2ai.lukedupin.com/privkey.pem --ssl-certfile /etc/letsencrypt/live/ink2ai.lukedupin.com/fullchain.pem
 Restart=always
-WorkingDirectory=/opt/patent/server
+WorkingDirectory=/opt/ink2ai/server
 
 [Install]
 WantedBy=multi-user.target
