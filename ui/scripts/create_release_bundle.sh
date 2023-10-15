@@ -21,10 +21,10 @@ mv build target
 echo "sudo chown -R www-data:www-data target"
 sudo chown -R www-data:www-data target
 
-echo "sudo systemctl restart fast_api.service"
-sudo systemctl restart fast_api.service
-echo "sudo systemctl restart apache2"
-sudo systemctl restart apache2
+echo "sudo systemctl restart ink2ai.service"
+sudo systemctl restart ink2ai.service
+echo "sudo systemctl restart httpd"
+sudo systemctl restart httpd
 
 echo ""
 echo "Completed"
