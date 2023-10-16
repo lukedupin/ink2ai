@@ -220,6 +220,7 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
     # Reset the progress and fail
     if image is None:
         await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
+        return
 
     # Convert the image to bytes and get the file size
     with BytesIO() as byte_stream:
