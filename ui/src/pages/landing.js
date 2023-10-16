@@ -46,12 +46,13 @@ export const Landing = (props) => {
         cn_start: 0,
         cn_end: 100,
         filename: '',
+        clean_img: true,
         raw_file: null,
         usr_img: null,
         result_size: 0,
         result_images: [],
     })
-    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, raw_file, usr_img, result_size, result_images } = state
+    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, clean_img, raw_file, usr_img, result_size, result_images } = state
 
     const [socket, setSocket] = useState(null);
 
@@ -59,8 +60,14 @@ export const Landing = (props) => {
 
     const [progress, setProgress] = useState(-1); // Progress of file upload
 
+    const [updateDraw, setUpdateDraw] = useState(null);
+
     //File ref required to access the file browser
     const fileRef = React.useRef();
+
+    const canvasRef = useRef(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+
 
     const [scrollPosition, setScrollPosition] = useState(0);
     const handleScroll = () => {
@@ -69,6 +76,8 @@ export const Landing = (props) => {
     };
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: false });
+
+        setTimeout( clearCanvas, 250 )
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
@@ -121,17 +130,12 @@ export const Landing = (props) => {
 
         //Store data until we have everything
         if ( result_size != 0 && current < result_size ) {
-            console.log(data)
             setFileData( prev => ([...prev, data]) )
         }
         //We have everything, display the image
         else {
-            console.log( fileData)
-            console.log( data)
             const buffer = combineArrayBuffers( [...fileData, data])
-            console.log( buffer )
             const blob = new Blob([buffer], { type: 'image/png' });
-            console.log(blob)
             setState(prev => ({...prev,
                 result_images: [ URL.createObjectURL(blob), ...prev.result_images ],
             }))
@@ -167,7 +171,6 @@ export const Landing = (props) => {
 
         // Check file size
         const file_mb = raw_file.size / (1024 * 1024)
-        console.log( file_mb )
         if ( file_mb > 150 ) {
             showToast( 'Files need to be less than 150MB', 'failure')
             return
@@ -178,6 +181,7 @@ export const Landing = (props) => {
 
         //Start the upload
         handleUpload( raw_file )
+        loadFileIntoCanvas( raw_file )
 
         //update the state
         setState(prev => ({...prev,
@@ -186,6 +190,22 @@ export const Landing = (props) => {
             usr_img: URL.createObjectURL( raw_file ),
         }))
     };
+
+    const loadFileIntoCanvas = (raw_file) => {
+        const canvas = canvasRef.current
+        if ( canvas == null ) {
+            return
+        }
+        const context = canvas.getContext('2d');
+
+        const image = new window.Image();
+        image.src = URL.createObjectURL( raw_file )
+
+        image.onload = () => {
+            // Draw the image on the canvas at position (0, 0)
+            context.drawImage(image, 0, 0, 512, 512);
+        };
+    }
 
     const handleUpload = ( raw_file ) => {
         if ( !connected ) {
@@ -203,6 +223,23 @@ export const Landing = (props) => {
 
         Util.sendFileWS( socket, raw_file )
     };
+
+    const handleUploadCanvas = () => {
+        if ( canvasRef.current == null ) {
+            return
+        }
+        const canvas = canvasRef.current
+
+        canvas.toBlob((blob) => {
+            const raw_file = new File([blob], 'dirty_canvas.png', { type: 'image/png' });
+            setState(prev => ({ ...prev,
+                filename: raw_file.name,
+                raw_file,
+            }))
+
+            handleUpload( raw_file )
+        }, 'image/png');
+    }
 
     const handleRunSDXL = () => {
         if ( !connected || !sdxl_loaded ) {
@@ -224,6 +261,80 @@ export const Landing = (props) => {
             cn_end: cn_end / 100,
         })
     }
+
+    const clearCanvas = () => {
+        const canvas = canvasRef.current;
+        if ( canvas == null ) {
+            return
+        }
+        const context = canvas.getContext('2d');
+        //context.clearRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = 'white';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+
+        //Draw back the image ?
+        if ( !clean_img && raw_file ) {
+            loadFileIntoCanvas( raw_file )
+            setState(prev => ({ ...prev,
+                clean_img: true,
+            }))
+        }
+    };
+
+    const startDrawing = (e) => {
+        const canvas = canvasRef.current
+        if ( canvas == null ) {
+            return
+        }
+        const context = canvas.getContext('2d');
+
+        setIsDrawing(true);
+        context.beginPath();
+        context.moveTo(
+            e.clientX - canvas.getBoundingClientRect().left,
+            e.clientY - canvas.getBoundingClientRect().top
+        );
+
+        //Cancel any pending updates
+        if ( updateDraw ) {
+            clearTimeout( updateDraw )
+        }
+        setUpdateDraw( null )
+        setState(prev => ({ ...prev,
+            clean_img: false,
+        }))
+    };
+
+    const drawCanvas = (e) => {
+        const canvas = canvasRef.current
+        if ( canvas == null || !isDrawing ) {
+            return
+        }
+        const context = canvas.getContext('2d');
+
+        context.lineTo(
+            e.clientX - canvas.getBoundingClientRect().left,
+            e.clientY - canvas.getBoundingClientRect().top
+        );
+        context.stroke();
+    };
+
+    const stopDrawing = () => {
+        const canvas = canvasRef.current
+        if ( canvas == null || !isDrawing ) {
+            return
+        }
+        const context = canvas.getContext('2d');
+
+        setIsDrawing(false);
+        context.closePath();
+
+        //Create a delayed update
+        if ( updateDraw ) {
+            clearTimeout( updateDraw )
+        }
+        setUpdateDraw( setTimeout( handleUploadCanvas, 1000 ))
+    };
 
     const bg = useColorModeValue("gray.50", "gray.700");
     const color = useColorModeValue("black", "white");
@@ -265,7 +376,8 @@ export const Landing = (props) => {
                                 spacing={3}
                                 mb={6}
                                 p={4}
-                                bg={bg}
+                                bg={"#f0f0f0"}
+                                height={640}
                                 borderRadius="md"
                                 boxShadow="xl"
                                 borderColor="gray.200"
@@ -279,11 +391,24 @@ export const Landing = (props) => {
                                 onChange={handleFileChange}
                                 style={{ display: "none" }}
                             />
-                            <Button onClick={handleFileClick}>
-                                Choose File
-                            </Button>
+                            <HStack align="start">
+                                <Button onClick={handleFileClick}>
+                                    Choose File
+                                </Button>
+                                <Button onClick={clearCanvas}>
+                                    Clear
+                                </Button>
+                            </HStack>
                             <Box boxSize='sm'>
-                                <Image src={usr_img} alt='Your hand drawn image' />
+                                <canvas
+                                    ref={canvasRef}
+                                    width="512"
+                                    height="512"
+                                    onMouseUp={stopDrawing}
+                                    onMouseMove={drawCanvas}
+                                    onMouseDown={startDrawing}
+                                    onMouseLeave={stopDrawing}
+                                    />
                             </Box>
                         </VStack>
                     </GridItem>
