@@ -98,7 +98,11 @@ async def succ_js( state, ep, resp ):
         'resp': resp
     }
     data_json = json.dumps(data)
-    await state.sock.send_text(data_json)
+    try:
+        await state.sock.send_text(data_json)
+
+    except ConnectionClosedError as e:
+        return
 
 
 async def fail_js( state, ep, resp ):
