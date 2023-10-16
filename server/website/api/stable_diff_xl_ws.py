@@ -136,6 +136,7 @@ def run_pipeline( state: State ):
     async def progress_update( progress: int ):
         await ws.succ_js(state, 'sdxl_progress', {'progress': progress})
 
+    err = None
     try:
         image = pipe(
             state.prompt,
@@ -150,23 +151,20 @@ def run_pipeline( state: State ):
             ).images[0]
 
     except ValueError as e:
-        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
-        return None
+        err = str(e)
 
     except TypeError as e:
-        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
-        return None
+        err = str(e)
 
     except Exception as e:
-        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
-        return None
+        err = str(e)
 
     #state.image.save("/tmp/canny.png")
     #image.save("/tmp/image.png")
 
     pipeline['lock'] = False
 
-    return image
+    return image if err is None else err
 
 
 async def sdxl_init(state: State ):
@@ -218,8 +216,11 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
             state )  # args to pass to the function
 
     # Reset the progress and fail
-    if image is None:
+    if isinstance( image, str ) or image is None:
         await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
+        if image is None:
+            image = "Processing error"
+        await ws.fail_js(state, 'sdxl_progress', image )
         return
 
     # Convert the image to bytes and get the file size
