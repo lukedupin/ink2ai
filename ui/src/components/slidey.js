@@ -20,7 +20,7 @@ export const Slidey = props => {
   }
 
   return (
-    <Box pt={6} pb={2} width="full">
+    <Box pt={6} pb={2} pl={16} pr={16} width="full">
       <Slider aria-label='slider-ex-6'
               width="full"
               max={max}

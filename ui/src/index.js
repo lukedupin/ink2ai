@@ -228,7 +228,7 @@ export const Core = (props) => {
                 }/>
             </Routes>
 
-            {show_footer &&
+            {show_footer && false &&
                 <Footer
                     showToast={handleToast} />
             }

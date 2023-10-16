@@ -281,6 +281,16 @@ export const Landing = (props) => {
         }
     };
 
+    const getClientXY = (e) => {
+        let { clientX, clientY } = e
+        if ( 'touches' in e ) {
+            clientX = e.touches[0].clientX
+            clientY = e.touches[0].clientY
+        }
+
+        return [ clientX, clientY ]
+    }
+
     const startDrawing = (e) => {
         const canvas = canvasRef.current
         if ( canvas == null ) {
@@ -288,11 +298,13 @@ export const Landing = (props) => {
         }
         const context = canvas.getContext('2d');
 
+        const [ x, y ] = getClientXY( e )
+
         setIsDrawing(true);
         context.beginPath();
         context.moveTo(
-            e.clientX - canvas.getBoundingClientRect().left,
-            e.clientY - canvas.getBoundingClientRect().top
+            x - canvas.getBoundingClientRect().left,
+            y - canvas.getBoundingClientRect().top
         );
 
         //Cancel any pending updates
@@ -303,6 +315,8 @@ export const Landing = (props) => {
         setState(prev => ({ ...prev,
             clean_img: false,
         }))
+
+        e.preventDefault()
     };
 
     const drawCanvas = (e) => {
@@ -312,14 +326,18 @@ export const Landing = (props) => {
         }
         const context = canvas.getContext('2d');
 
+        const [ x, y ] = getClientXY(e)
+
         context.lineTo(
-            e.clientX - canvas.getBoundingClientRect().left,
-            e.clientY - canvas.getBoundingClientRect().top
+            x - canvas.getBoundingClientRect().left,
+            y - canvas.getBoundingClientRect().top
         );
         context.stroke();
+
+        e.preventDefault()
     };
 
-    const stopDrawing = () => {
+    const stopDrawing = (e) => {
         const canvas = canvasRef.current
         if ( canvas == null || !isDrawing ) {
             return
@@ -328,6 +346,8 @@ export const Landing = (props) => {
 
         setIsDrawing(false);
         context.closePath();
+
+        e.preventDefault()
 
         //Create a delayed update
         if ( updateDraw ) {
@@ -377,13 +397,13 @@ export const Landing = (props) => {
                                 mb={6}
                                 p={4}
                                 bg={"#f0f0f0"}
-                                height={640}
+                                height={680}
                                 borderRadius="md"
                                 boxShadow="xl"
                                 borderColor="gray.200"
                                 borderWidth={1}>
                             <Text fontSize="lg" fontWeight="bold" color={color}>
-                                Upload your PNG (resized to 512x512)
+                                Upload your PNG or draw on canvas
                             </Text>
                             <input
                                 type='file'
@@ -401,6 +421,7 @@ export const Landing = (props) => {
                             </HStack>
                             <Box boxSize='sm'>
                                 <canvas
+                                    style={{touchAction: 'none'}}
                                     ref={canvasRef}
                                     width="512"
                                     height="512"
@@ -408,83 +429,57 @@ export const Landing = (props) => {
                                     onMouseMove={drawCanvas}
                                     onMouseDown={startDrawing}
                                     onMouseLeave={stopDrawing}
+
+                                    onTouchStart={startDrawing}
+                                    onTouchMove={drawCanvas}
+                                    onTouchCancel={stopDrawing}
+                                    onTouchEnd={stopDrawing}
                                     />
                             </Box>
                         </VStack>
                     </GridItem>
 
-                    <GridItem>
+                    <GridItem as="main" width="full" height={680}>
                         <VStack align="start"
                                 spacing={3}
                                 mb={6}
                                 p={4}
                                 bg={bg}
-                                width={"full"}
+                                width="full"
+                                height={680}
+                                overflow={'auto'}
                                 borderRadius="md"
                                 boxShadow="xl"
                                 borderColor="gray.200"
                                 borderWidth={1}>
-                            <Text fontSize="lg" fontWeight="bold" mb={6} color={color}>
-                                Tuning param
-                            </Text>
-
-
-                            <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN Weight (How much to use your drawing)
-                            </Text>
-                            <Slidey
-                                id={"cn_weight"}
-                                value={cn_weight}
-                                min={0}
-                                max={3000}
-                                marker_start_end={true}
-                                markers={6}
-                                marker_cb={ (value) => value / 1000 }
-                                onChange={handleChange}
-                            />
-
-                            <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN Start (% to start using your drawing)
-                            </Text>
-                            <Slidey
-                                id={"cn_start"}
-                                value={cn_start}
-                                min={0}
-                                max={100}
-                                markers={3}
-                                marker_cb={ (value) => value + "%" }
-                                onChange={handleChange}
-                            />
-
-                            <Text fontSize="sm" fontWeight="bold" color={color}>
-                                CN End (% to stop using your drawing)
-                            </Text>
-                            <Slidey
-                                id={"cn_end"}
-                                value={cn_end}
-                                min={0}
-                                max={100}
-                                markers={3}
-                                marker_cb={ (value) => value + "%" }
-                                onChange={handleChange}
-                            />
-
-                            <Text fontSize="sm" fontWeight="bold" color={color}>
-                                Steps (More is slower)
-                            </Text>
-                            <Slidey
-                                id={"cn_steps"}
-                                value={cn_steps}
-                                min={5}
-                                max={50}
-                                marker_start_end={true}
-                                markers={6}
-                                marker_cb={ (value) => Math.floor(value) }
-                                onChange={handleChange}
-                            />
-
+                            <Button
+                                algin="start"
+                                height={40}
+                                variant="primary"
+                                onClick={handleRunSDXL}>
+                                Generate Image
+                            </Button>
+                            <VStack height={640} width={"full"}>
+                                {progress >= 0 &&
+                                    <GridItem as="main" p={4}>
+                                        <Text fontSize="sm" fontWeight="bold" color={color}>
+                                            {(progress == 0)? "Waiting to start": "Generating Image"}
+                                        </Text>
+                                        <Progress width="full" hasStripe value={progress} />
+                                    </GridItem>
+                                }
+                                {result_images.map( (img, i) => (
+                                    <GridItem key={`sd_img_${i}`} as="main" p={4}>
+                                        <a href={img} target="_blank">
+                                            <Image src={img} alt='SD XL' key={`result_${i}`} />
+                                        </a>
+                                        <a href={img} download={`result_${i}.png`}>Download</a>
+                                    </GridItem>
+                                ))}
+                            </VStack>
                         </VStack>
                     </GridItem>
+
                 </Grid>
             </GridItem>
 
@@ -521,38 +516,76 @@ export const Landing = (props) => {
                 </Grid>
             </GridItem>
 
-            <GridItem as="main" p={4} width="full">
-                <Button
-                    variant="primary"
-                    onClick={handleRunSDXL}>
-                    Generate Image
-                </Button>
+            <GridItem>
                 <VStack align="start"
                         spacing={3}
                         mb={6}
                         p={4}
                         bg={bg}
-                        width="full"
+                        width={"full"}
                         borderRadius="md"
                         boxShadow="xl"
                         borderColor="gray.200"
                         borderWidth={1}>
-                    {progress >= 0 &&
-                        <GridItem as="main" p={4}>
-                            <Text fontSize="sm" fontWeight="bold" color={color}>
-                                {(progress == 0)? "Waiting to start": "Generating Image"}
-                            </Text>
-                            <Progress width="full" hasStripe value={progress} />
-                        </GridItem>
-                    }
-                    {result_images.map( (img, i) => (
-                    <GridItem key={`sd_img_${i}`} as="main" p={4}>
-                        <a href={img} target="_blank">
-                            <Image src={img} alt='SD XL' key={`result_${i}`} />
-                        </a>
-                        <a href={img} download={`result_${i}.png`}>Download</a>
-                    </GridItem>
-                    ))}
+                    <Text fontSize="lg" fontWeight="bold" mb={6} color={color}>
+                        Tuning param
+                    </Text>
+
+
+                    <Text fontSize="sm" fontWeight="bold" color={color}>
+                        CN Weight (How much to use your drawing)
+                    </Text>
+                    <Slidey
+                        id={"cn_weight"}
+                        value={cn_weight}
+                        min={0}
+                        max={3000}
+                        marker_start_end={true}
+                        markers={6}
+                        marker_cb={ (value) => value / 1000 }
+                        onChange={handleChange}
+                    />
+
+                    <Text fontSize="sm" fontWeight="bold" color={color}>
+                        CN Start (% to start using your drawing)
+                    </Text>
+                    <Slidey
+                        id={"cn_start"}
+                        value={cn_start}
+                        min={0}
+                        max={100}
+                        markers={3}
+                        marker_cb={ (value) => value + "%" }
+                        onChange={handleChange}
+                    />
+
+                    <Text fontSize="sm" fontWeight="bold" color={color}>
+                        CN End (% to stop using your drawing)
+                    </Text>
+                    <Slidey
+                        id={"cn_end"}
+                        value={cn_end}
+                        min={0}
+                        max={100}
+                        markers={3}
+                        marker_cb={ (value) => value + "%" }
+                        onChange={handleChange}
+                    />
+
+                    <Text fontSize="sm" fontWeight="bold" color={color}>
+                        Steps (More is slower)
+                    </Text>
+                    <Slidey
+                        id={"cn_steps"}
+                        value={cn_steps}
+                        min={5}
+                        max={50}
+                        marker_start_end={true}
+                        markers={6}
+                        marker_cb={ (value) => Math.floor(value) }
+                        onChange={handleChange}
+                    />
+
                 </VStack>
             </GridItem>
         </Grid>

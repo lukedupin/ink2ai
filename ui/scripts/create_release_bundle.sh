@@ -18,8 +18,8 @@ sudo rm -rf target
 echo "mv build target"
 mv build target
 
-echo "sudo chown -R www-data:www-data target"
-sudo chown -R www-data:www-data target
+#echo "sudo chown -R www-data:www-data target"
+#sudo chown -R www-data:www-data target
 
 echo "sudo systemctl restart ink2ai.service"
 sudo systemctl restart ink2ai.service
