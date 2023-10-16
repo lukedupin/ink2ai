@@ -136,25 +136,35 @@ def run_pipeline( state: State ):
     async def progress_update( progress: int ):
         await ws.succ_js(state, 'sdxl_progress', {'progress': progress})
 
-    image = pipe(
-        state.prompt,
-        state.image,
-        width=512, height=512,
-        negative_prompt=state.negative_prompt,
-        controlnet_conditioning_scale=state.cn_weight,
-        control_guidance_start=state.cn_start,
-        control_guidance_end=state.cn_end,
-        num_inference_steps=state.cn_steps,
-        callback=lambda step, ts, latent: asyncio.run(progress_update( int(100 * (step / state.cn_steps)) )),
-        callback_steps=3,
-        ).images[0]
+    err = None
+    try:
+        image = pipe(
+            state.prompt,
+            state.image,
+            width=512, height=512,
+            negative_prompt=state.negative_prompt,
+            controlnet_conditioning_scale=state.cn_weight,
+            control_guidance_start=state.cn_start,
+            control_guidance_end=state.cn_end,
+            num_inference_steps=state.cn_steps,
+            callback=lambda step, ts, latent: asyncio.run(progress_update( int(100 * (step / state.cn_steps)) )),
+            ).images[0]
+
+    except ValueError as e:
+        err = str(e)
+
+    except TypeError as e:
+        err = str(e)
+
+    except Exception as e:
+        err = str(e)
 
     #state.image.save("/tmp/canny.png")
     #image.save("/tmp/image.png")
 
     pipeline['lock'] = False
 
-    return image
+    return image if err is None else err
 
 
 async def sdxl_init(state: State ):
@@ -180,12 +190,17 @@ async def sdxl_user_file_size( state: State, file_size: int ):
 
 
 async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float):
+    # Ensure the state is valid
+    if state.image is None:
+        return 'Please (re)upload your image'
+
+    # Set the state params
     state.prompt = prompt
-    state.negative_prompt = negative
-    state.cn_steps = cn_steps
-    state.cn_weight = cn_weight
-    state.cn_start = cn_start
-    state.cn_end = cn_end
+    state.negative_prompt = "((Naked)), ((Nude)), ((NSFW)), "+ negative
+    state.cn_steps = int(cn_steps)
+    state.cn_weight = float(cn_weight)
+    state.cn_start = float(cn_start)
+    state.cn_end = float(cn_end)
 
     await ws.succ_js(state, 'sdxl_progress', { 'progress': 0 })
 
@@ -199,6 +214,14 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
             pool,
             run_pipeline,  # working function that runs threaded
             state )  # args to pass to the function
+
+    # Reset the progress and fail
+    if isinstance( image, str ) or image is None:
+        await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
+        if image is None:
+            image = "Processing error"
+        await ws.fail_js(state, 'sdxl_progress', image )
+        return
 
     # Convert the image to bytes and get the file size
     with BytesIO() as byte_stream:
@@ -219,6 +242,10 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
 
 
 async def process_file(state: State, data: bytes ):
+    # ensure everything is valid
+    if state.handle is None:
+        return "No file handle"
+
     # Store the data
     state.handle.write( data )
     state.data_loaded += len(data)

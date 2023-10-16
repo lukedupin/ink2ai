@@ -129,9 +129,9 @@ export const combineArrayBuffers = (arrayBuffers) => {
     // Create a view into the combined buffer
     const combinedView = new Uint8Array(combinedBuffer);
 
-    console.log( totalLength )
-    console.log( combinedBuffer )
-    console.log( combinedView )
+    //console.log( totalLength )
+    //console.log( combinedBuffer )
+    //console.log( combinedView )
 
     // Copy each array buffer into the combined buffer
     let offset = 0;
