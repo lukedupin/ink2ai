@@ -196,11 +196,11 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
 
     # Set the state params
     state.prompt = prompt
-    state.negative_prompt = negative
-    state.cn_steps = cn_steps
-    state.cn_weight = cn_weight
-    state.cn_start = cn_start
-    state.cn_end = cn_end
+    state.negative_prompt = "((Naked)), ((Nude)), ((NSFW)), "+ negative
+    state.cn_steps = int(cn_steps)
+    state.cn_weight = float(cn_weight)
+    state.cn_start = float(cn_start)
+    state.cn_end = float(cn_end)
 
     await ws.succ_js(state, 'sdxl_progress', { 'progress': 0 })
 
