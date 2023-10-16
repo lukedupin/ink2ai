@@ -150,13 +150,16 @@ def run_pipeline( state: State ):
             ).images[0]
 
     except ValueError as e:
-        return str(e)
+        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
+        return None
 
     except TypeError as e:
-        return str(e)
+        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
+        return None
 
     except Exception as e:
-        return str(e)
+        asyncio.run( ws.fail_js(state, 'sdxl_progress', str(e)))
+        return None
 
     #state.image.save("/tmp/canny.png")
     #image.save("/tmp/image.png")
@@ -213,6 +216,10 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
             pool,
             run_pipeline,  # working function that runs threaded
             state )  # args to pass to the function
+
+    # Reset the progress and fail
+    if image is None:
+        await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
 
     # Convert the image to bytes and get the file size
     with BytesIO() as byte_stream:
