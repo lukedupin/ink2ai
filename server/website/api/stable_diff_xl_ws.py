@@ -152,6 +152,12 @@ def run_pipeline( state: State ):
     except ValueError as e:
         return str(e)
 
+    except TypeError as e:
+        return str(e)
+
+    except Exception as e:
+        return str(e)
+
     #state.image.save("/tmp/canny.png")
     #image.save("/tmp/image.png")
 
