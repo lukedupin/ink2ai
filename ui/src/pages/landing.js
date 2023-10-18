@@ -429,6 +429,7 @@ export const Landing = (props) => {
                                 spacing={3}
                                 mb={6}
                                 p={1}
+                                display={show_discord? 'none': ''}
                                 bg={"#f0f0f0"}
                                 height={680}
                                 borderRadius="md"
