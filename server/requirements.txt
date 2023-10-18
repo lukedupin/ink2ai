@@ -4,6 +4,7 @@ uvicorn
 #pip install 'uvicorn[standard]'
 
 django
+psycopg2
 psycopg2-binary
 tzwhere
 pytz
