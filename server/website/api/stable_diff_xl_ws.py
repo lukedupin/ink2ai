@@ -4,7 +4,7 @@ from asgiref.sync import sync_to_async
 from fastapi import WebSocket
 from json import JSONDecodeError
 from django.db.utils import IntegrityError
-from website.helpers import ws, util, stable_diff, discord
+from website.helpers import ws, util, stable_diff, discord_local
 
 import io
 
@@ -61,7 +61,7 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
     )
 
 async def sdxl_to_discord( state: State, uuid_code: str ):
-    discord.sendToDiscord( uuid_code )
+    discord_local.sendToDiscord( uuid_code )
 
 
 async def process_file(state: State, data: bytes ):

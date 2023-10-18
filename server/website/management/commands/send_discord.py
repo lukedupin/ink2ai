@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from website.helpers import discord
+from website.helpers import discord_local
 
 import re, os, json
 from django.conf import settings
@@ -28,4 +28,4 @@ class Command(BaseCommand):
             f"Weight: {js['cn_steps']}\nStart: {js['cn_start']}%\nEnd: {js['cn_end']}%",
         ]
 
-        discord.send_img( '\n\n'.join(msg), path )
+        discord_local.send_img( '\n\n'.join(msg), path )
