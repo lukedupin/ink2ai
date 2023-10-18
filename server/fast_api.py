@@ -44,3 +44,6 @@ app.add_middleware( CORSMiddleware, **settings.FAST_API )
 
 ### Warm up SDXL pipeline
 stable_diff.getPipeline()
+
+# Create the directory
+os.makedirs(settings.PAYLOAD_PATH, exist_ok=True)

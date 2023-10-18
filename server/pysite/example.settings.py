@@ -192,3 +192,12 @@ FAST_API = {
 OPENAI_API_KEY ='xxx'
 
 MODLE_NAME = 'gpt-3.5-turbo'
+
+PAYLOAD_PATH = '/tmp/ink2ai'
+
+DISCORD = {
+    "LINK": "https://discord.gg/xxxxxx",
+    "BOT_TOKEN": "xxxxxx",
+    "CHANNEL_ID": "xxxxxx",
+    "BOT_ID": "xxxxxx",
+}

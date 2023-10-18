@@ -32,6 +32,9 @@ import {Button} from "react-bootstrap";
 
 import * as RobotLevelUp from '../assets/images/robot_level_up.png'
 import {Slidey} from "../components/slidey";
+import { ModalBase } from "../modals/modal_base";
+import { AvatarModal } from "../modals/avatar_modal";
+import { Discord } from "../modals/discord";
 
 export const Landing = (props) => {
     const {showToast} = props
@@ -53,8 +56,10 @@ export const Landing = (props) => {
         result_images: [],
         queue: -1,
         queue_current: -1,
+        show_discord: true,
+        uuid_code: null,
     })
-    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, clean_img, raw_file, usr_img, result_size, result_images, queue, queue_current } = state
+    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, clean_img, raw_file, usr_img, result_size, result_images, queue, queue_current, show_discord } = state
 
     const [socket, setSocket] = useState(null);
 
@@ -123,8 +128,8 @@ export const Landing = (props) => {
         console.log( status )
     }
 
-    const recvSdxlFilesize = ({file_size}) => {
-        setState(prev => ({ ...prev, result_size: file_size }))
+    const recvSdxlFilesize = ({uuid_code, file_size}) => {
+        setState(prev => ({ ...prev, result_size: file_size, uuid_code }))
     }
 
     const recvSdxlProgress = ({progress}) => {
@@ -143,7 +148,10 @@ export const Landing = (props) => {
             const buffer = combineArrayBuffers( [...fileData, data])
             const blob = new Blob([buffer], { type: 'image/png' });
             setState(prev => ({...prev,
-                result_images: [ URL.createObjectURL(blob), ...prev.result_images ],
+                result_images: [
+                    { url: URL.createObjectURL(blob), uuid_code: prev.uuid_code},
+                    ...prev.result_images
+                ],
             }))
         }
     }
@@ -275,6 +283,18 @@ export const Landing = (props) => {
         })
     }
 
+    const handleClose = () => {
+        setState(prev => ({ ...prev,
+            show_discord: false,
+        }))
+    }
+
+    const handleDiscord = ( uuid_code ) => {
+        Util.sendWS( socket, 'sdxl_to_discord', { uuid_code })
+
+        showToast("Sending to Discord", "success")
+    }
+
     const clearCanvas = () => {
         const canvas = canvasRef.current;
         if ( canvas == null ) {
@@ -400,7 +420,7 @@ export const Landing = (props) => {
         )
     }
 
-    return (
+    return (<>
         <Grid templateRows="auto 1fr" mt={36} mb={24}>
             <GridItem as="main" p={4}>
                 <Grid templateColumns={templateColumns} gap={6}>
@@ -483,12 +503,15 @@ export const Landing = (props) => {
                                         <Progress width="full" hasStripe value={progress} />
                                     </GridItem>
                                 }
-                                {result_images.map( (img, i) => (
+                                {result_images.map( (entry, i) => (
                                     <GridItem key={`sd_img_${i}`} as="main" p={4}>
-                                        <a href={img} target="_blank">
-                                            <Image src={img} alt='SD XL' key={`result_${i}`} />
+                                        <a href={entry.url} target="_blank">
+                                            <Image src={entry.url} alt='SD XL' key={`result_${i}`} />
                                         </a>
-                                        <a href={img} download={`result_${i}.png`}>Download</a>
+                                        <a href={entry.url} download={`result_${i}.png`}>Download</a>
+                                        <a href="#" style={{marginLeft: '48px'}} onClick={() => handleDiscord( entry.uuid_code )}>
+                                            Send to Discord
+                                        </a>
                                     </GridItem>
                                 ))}
                             </VStack>
@@ -603,5 +626,14 @@ export const Landing = (props) => {
                 </VStack>
             </GridItem>
         </Grid>
+
+        <ModalBase blackout={true} centered={true}>
+            {show_discord &&
+                <Discord showToast={showToast}
+                       onClose={handleClose}
+                />
+            }
+        </ModalBase>
+    </>
     );
 }

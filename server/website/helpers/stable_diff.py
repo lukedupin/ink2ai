@@ -1,3 +1,5 @@
+import uuid
+
 from asgiref.sync import sync_to_async
 from fastapi import WebSocket
 from json import JSONDecodeError
@@ -13,8 +15,9 @@ from diffusers.utils import load_image
 import numpy as np
 from io import BytesIO
 import asyncio, concurrent.futures, torch
+from django.conf import settings
 
-import cv2
+import cv2, os, json
 from PIL import Image
 
 from website.helpers.async_safe_dict import AsyncSafeDict
@@ -130,6 +133,29 @@ def run_pipeline( state: QueueMsg ):
     return image if err is None else err
 
 
+def save_bundle( msg, image ):
+    uuid_code = str(uuid.uuid4())
+
+    path = f"{settings.PAYLOAD_PATH}/{uuid_code}"
+    os.makedirs(path, exist_ok=True)
+
+    # Save this to a payload
+    with open(f"{path}/payload.json", 'w') as f:
+        f.write(json.dumps({
+            'prompt': msg.prompt,
+            'negative': msg.negative,
+            'cn_steps': msg.cn_steps,
+            'cn_weight': msg.cn_weight,
+            'cn_start': msg.cn_start,
+            'cn_end': msg.cn_end,
+        }))
+
+    msg.image.save(f"{path}/drawing.png")
+    image.save(f"{path}/output.png")
+
+    return uuid_code
+
+
 async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
     global queue_current_idx
 
@@ -141,8 +167,8 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
             continue
 
         # Pull the queue and update users where they currently are
-        sock, queue_current_idx = await queue_dict.take( msg.uid )
-        await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_current_idx, 'queue_current': queue_current_idx})
+        _, queue_current_idx = await queue_dict.get( msg.uid )
+        #await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_current_idx, 'queue_current': queue_current_idx})
         for uid in await queue_dict.keys():
             sock, queue_idx = await queue_dict.get( uid )
             await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_idx, 'queue_current': queue_current_idx})
@@ -166,11 +192,13 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
             await ws.fail_js(msg, 'sdxl_progress', image)
             return
 
+        uuid_code = save_bundle( msg, image )
+
         # Convert the image to bytes and get the file size
         with BytesIO() as byte_stream:
             image.save(byte_stream, format='PNG')
             file_size = len(byte_stream.getvalue())
-            await ws.succ_js(msg, 'sdxl_file_size', {'file_size': file_size})
+            await ws.succ_js(msg, 'sdxl_file_size', {'file_size': file_size, 'uuid_code': uuid_code })
 
             # Send the image
             sent = 0
@@ -179,6 +207,9 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
                 one_megabyte = byte_stream.read(1048576)
                 await msg.sock.send_bytes(one_megabyte)
                 sent += len(one_megabyte)
+
+        sock, queue_current_idx = await queue_dict.take( msg.uid )
+        await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_current_idx, 'queue_current': queue_current_idx})
 
     # Tell the asyncio.create_task -> join that we are done with the task
     queue.task_done()

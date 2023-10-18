@@ -18,6 +18,6 @@ from django.contrib import admin
 from django.urls import path
 from website.admin import admin_site
 
+# legislation_api.urls() +
 urlpatterns = \
-    #legislation_api.urls() + \
     [ path("admin/", admin_site.urls), ]

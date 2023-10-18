@@ -4,7 +4,7 @@ from asgiref.sync import sync_to_async
 from fastapi import WebSocket
 from json import JSONDecodeError
 from django.db.utils import IntegrityError
-from website.helpers import ws, util, stable_diff
+from website.helpers import ws, util, stable_diff, discord
 
 import io
 
@@ -42,7 +42,6 @@ async def sdxl_user_file_size( state: State, file_size: int ):
 
 
 async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float):
-    print("Generate called")
     # Ensure the state is valid
     if state.image is None:
         return 'Please (re)upload your image'
@@ -60,6 +59,9 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
         cn_start,
         cn_end
     )
+
+async def sdxl_to_discord( state: State, uuid_code: str ):
+    discord.sendToDiscord( uuid_code )
 
 
 async def process_file(state: State, data: bytes ):
@@ -95,6 +97,7 @@ async def ws_entry(websocket: WebSocket):
         'sdxl_init': sdxl_init,
         'sdxl_user_file_size': sdxl_user_file_size,
         'sdxl_generate': sdxl_generate,
+        'sdxl_to_discord': sdxl_to_discord,
 
         'file': process_file,
 

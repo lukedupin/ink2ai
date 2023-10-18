@@ -10,6 +10,7 @@ import { LoginType } from "../helpers/consts";
 
 import Logo from '../assets/images/logo.png'
 import Discord from '../assets/images/discord-logo-blue.png'
+import { DISCORD_URL } from "../settings";
 
 export const Header = (props) => {
     const { showToast } = props;
@@ -82,7 +83,7 @@ export const Header = (props) => {
                     <div className="row flex-align">
                         <div className="logo">
                                 <Link to={is_logged_in? "/map": "/"}>
-                                    <img src={Logo} width="50%" className="transition" alt="Been There"/>
+                                    <img src={Logo} className="transition" alt="Been There"/>
                             </Link>
                         </div>
                         <div className="nav-wrapper">
@@ -98,7 +99,7 @@ export const Header = (props) => {
                                         </li>
                                     ))}
                                     <li>
-                                        <Link to='/' onClick={handleClose}>
+                                        <Link to={DISCORD_URL} target="_blank" onClick={handleClose}>
                                             <img style={{ marginTop: "6px", width: '164px' }} src={Discord} alt="Discord"/>
                                         </Link>
                                     </li>
