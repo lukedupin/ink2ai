@@ -5,6 +5,8 @@ from json import JSONDecodeError
 
 import warnings, json, io
 
+from websockets.exceptions import ConnectionClosedError
+
 
 class WsState:
     def __init__(self, sock: WebSocket):

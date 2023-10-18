@@ -1,8 +1,10 @@
+import uuid
+
 from asgiref.sync import sync_to_async
 from fastapi import WebSocket
 from json import JSONDecodeError
 from django.db.utils import IntegrityError
-from website.helpers import ws, util
+from website.helpers import ws, util, stable_diff
 
 import io
 
@@ -13,172 +15,22 @@ import numpy as np
 from io import BytesIO
 import asyncio, concurrent.futures, torch
 
-import cv2
+import cv2, uuid
 from PIL import Image
 
 
 class State(ws.WsState):
     def __init__(self, websocket: WebSocket):
         super().__init__(websocket)
+        self.uid = str(uuid.uuid4())
         self.image = None
         self.handle = BytesIO()
         self.data_loaded = 0
         self.file_size = 0
 
-        self.prompt = None
-        self.negative_prompt = "low quality, bad quality, sketches"
-        self.cn_steps = 35
-        self.cn_weight = 0.5  # recommended for good generalization
-        self.cn_start = 0.0
-        self.cn_end = 1.0
-
-
-'''
-pipeline = None
-def getPipeline():
-    global pipeline
-    if pipeline is not None:
-        return pipeline['pipeline']
-
-    print("Spinning up SDXL pipeline")
-
-    # initialize the models and pipeline
-    controlnet = ControlNetModel.from_pretrained(
-        "diffusers/controlnet-canny-sdxl-1.0", torch_dtype=torch.float16
-    )
-    vae = AutoencoderKL.from_pretrained("madebyollin/sdxl-vae-fp16-fix", torch_dtype=torch.float16)
-    pipe = StableDiffusionXLControlNetPipeline.from_pretrained(
-        "stabilityai/stable-diffusion-xl-base-1.0", controlnet=controlnet, vae=vae, torch_dtype=torch.float16
-    )
-    pipe.enable_model_cpu_offload()
-
-    pipeline = {
-        'pipeline': pipe,
-        'controlnet': controlnet,
-        'vae': vae
-    }
-
-    print("SDXL pipeline ready")
-    return pipeline['pipeline']
-
-
-def run_pipeline( state: State ):
-    pipe = getPipeline()
-
-    # convert to gray
-    #grayscale_image = cv2.cvtColor(state.image, cv2.COLOR_BGR2GRAY)
-    #canny = 255 - grayscale_image
-
-    # Resize the image
-    #canny_clean = cv2.resize(canny, (1024, 1024))
-
-    # The image!
-    return pipe(
-        state.prompt,
-        negative_prompt=state.negative_prompt,
-        controlnet_conditioning_scale=state.cn_weight,
-        control_guidance_start=state.cn_start,
-        control_guidance_end=state.cn_end,
-        num_images_per_prompt=30,
-        width=512,#1024,
-        height=512,#1024,
-        image=state.image
-    ).images[0]
-'''
-
-pipeline = None
-def getPipeline():
-    global pipeline
-    if pipeline is not None:
-        return pipeline['pipeline']
-
-    controlnet = ControlNetModel.from_pretrained(
-        "lllyasviel/sd-controlnet-canny", torch_dtype=torch.float32
-    )
-
-    model_id = "sdvn53dcutewave_v10.safetensors"
-    model_id = "cyberrealistic_v33.safetensors"
-    model_id = "epicrealism_naturalSinRC1VAE.safetensors"
-    # model_id = "Lykon/DreamShaper"
-    # model_id = "runwayml/stable-diffusion-v1-5"
-    # pipe = StableDiffusionControlNetImg2ImgPipeline.from_pretrained(
-    pipe = StableDiffusionControlNetPipeline.from_single_file(
-    #pipe = StableDiffusionControlNetPipeline.from_pretrained(
-        model_id,
-        controlnet=controlnet,
-        safety_checker=None,
-        safetensors=True,
-        torch_dtype=torch.float32
-    )
-
-    pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
-
-    # Remove if you do not have xformers installed
-    # see https://huggingface.co/docs/diffusers/v0.13.0/en/optimization/xformers#installing-xformers
-    # for installation instructions
-    #pipe.enable_xformers_memory_efficient_attention()
-
-    pipe.enable_model_cpu_offload()
-
-    pipe.safety_checker = lambda images, **kwargs: (images, [False for _ in range(len(images))])
-
-    pipeline = {
-        'pipeline': pipe,
-        'controlnet': controlnet,
-        'lock': False,
-    }
-    return pipeline['pipeline']
-
-def run_pipeline( state: State ):
-    pipe = getPipeline()
-    pipeline['lock'] = True
-
-    async def progress_update( progress: int ):
-        await ws.succ_js(state, 'sdxl_progress', {'progress': progress})
-
-    err = None
-    try:
-        image = pipe(
-            state.prompt,
-            state.image,
-            width=512, height=512,
-            negative_prompt=state.negative_prompt,
-            controlnet_conditioning_scale=state.cn_weight,
-            control_guidance_start=state.cn_start,
-            control_guidance_end=state.cn_end,
-            num_inference_steps=state.cn_steps,
-            callback=lambda step, ts, latent: asyncio.run(progress_update( int(100 * (step / state.cn_steps)) )),
-            ).images[0]
-
-    except ValueError as e:
-        err = str(e)
-
-    except TypeError as e:
-        err = str(e)
-
-    except Exception as e:
-        err = str(e)
-
-    #state.image.save("/tmp/canny.png")
-    #image.save("/tmp/image.png")
-
-    pipeline['lock'] = False
-
-    return image if err is None else err
-
 
 async def sdxl_init(state: State ):
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        await asyncio.get_running_loop().run_in_executor(
-            pool,
-            getPipeline ) # No args
-
-    # get canny image
-    #image = np.array(image)
-    #image = cv2.Canny(image, 100, 200)
-    #image = image[:, :, None]
-    #image = np.concatenate([image, image, image], axis=2)
-    #canny_image = Image.fromarray(image)
+    state.image = Image.new("RGB", (512, 512), "white")
 
     return 'sdxl_ready', {}
 
@@ -194,29 +46,25 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
     if state.image is None:
         return 'Please (re)upload your image'
 
-    # Set the state params
-    state.prompt = prompt
-    state.negative_prompt = "((Naked)), ((Nude)), ((NSFW)), "+ negative
-    state.cn_steps = int(cn_steps)
-    state.cn_weight = float(cn_weight)
-    state.cn_start = float(cn_start)
-    state.cn_end = float(cn_end)
-
+    # Reset the progress
     await ws.succ_js(state, 'sdxl_progress', { 'progress': 0 })
 
-    # Spin while we wait
-    while pipeline is not None and pipeline['lock']:
-        await asyncio.sleep(1)
+    # Push the request onto the queue
+    image = await stable_diff.push_queue(
+        state,
+        prompt,
+        "((Naked)), ((Nude)), ((NSFW)), " + negative,
+        int(cn_steps),
+        float(cn_weight),
+        float(cn_start),
+        float(cn_end)
+    )
 
-    # Execute the command
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        image = await asyncio.get_running_loop().run_in_executor(
-            pool,
-            run_pipeline,  # working function that runs threaded
-            state )  # args to pass to the function
+    if image is None:
+        return
 
     # Reset the progress and fail
-    if isinstance( image, str ) or image is None:
+    if isinstance( image, str ):
         await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
         if image is None:
             image = "Processing error"
@@ -228,7 +76,6 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
         image.save(byte_stream, format='PNG')
         file_size = len(byte_stream.getvalue())
         await ws.succ_js(state, 'sdxl_file_size', { 'file_size': file_size })
-
 
         # Send the image
         sent = 0

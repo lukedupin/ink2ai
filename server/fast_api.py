@@ -24,6 +24,7 @@ from starlette.routing import WebSocketRoute
 
 from django.conf import settings
 
+from website.helpers import stable_diff
 from website.api import stable_diff_xl_ws
 
 ### Spin up the AI tasks
@@ -42,4 +43,4 @@ app.add_middleware( CORSMiddleware, **settings.FAST_API )
 
 
 ### Warm up SDXL pipeline
-stable_diff_xl_ws.getPipeline()
+stable_diff.getPipeline()
