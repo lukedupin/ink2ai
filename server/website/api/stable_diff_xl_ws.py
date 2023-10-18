@@ -42,6 +42,7 @@ async def sdxl_user_file_size( state: State, file_size: int ):
 
 
 async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float):
+    print("Generate called")
     # Ensure the state is valid
     if state.image is None:
         return 'Please (re)upload your image'
@@ -50,42 +51,15 @@ async def sdxl_generate( state: State, prompt: str, negative: str, cn_steps: int
     await ws.succ_js(state, 'sdxl_progress', { 'progress': 0 })
 
     # Push the request onto the queue
-    image = await stable_diff.push_queue(
+    await stable_diff.push_queue(
         state,
         prompt,
         "((Naked)), ((Nude)), ((NSFW)), " + negative,
-        int(cn_steps),
-        float(cn_weight),
-        float(cn_start),
-        float(cn_end)
+        cn_steps,
+        cn_weight,
+        cn_start,
+        cn_end
     )
-
-    if image is None:
-        return
-
-    # Reset the progress and fail
-    if isinstance( image, str ):
-        await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
-        if image is None:
-            image = "Processing error"
-        await ws.fail_js(state, 'sdxl_progress', image )
-        return
-
-    # Convert the image to bytes and get the file size
-    with BytesIO() as byte_stream:
-        image.save(byte_stream, format='PNG')
-        file_size = len(byte_stream.getvalue())
-        await ws.succ_js(state, 'sdxl_file_size', { 'file_size': file_size })
-
-        # Send the image
-        sent = 0
-        byte_stream.seek(0)
-        while sent < file_size:
-            one_megabyte = byte_stream.read(1048576)
-            await state.sock.send_bytes( one_megabyte )
-            sent += len(one_megabyte)
-
-    await ws.succ_js(state, 'sdxl_progress', { 'progress': -1 })
 
 
 async def process_file(state: State, data: bytes ):

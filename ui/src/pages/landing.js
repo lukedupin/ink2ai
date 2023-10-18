@@ -51,8 +51,10 @@ export const Landing = (props) => {
         usr_img: null,
         result_size: 0,
         result_images: [],
+        queue: -1,
+        queue_current: -1,
     })
-    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, clean_img, raw_file, usr_img, result_size, result_images } = state
+    const { connected, sdxl_loaded, prompt, negative, cn_weight, cn_steps, cn_start, cn_end, filename, clean_img, raw_file, usr_img, result_size, result_images, queue, queue_current } = state
 
     const [socket, setSocket] = useState(null);
 
@@ -77,7 +79,7 @@ export const Landing = (props) => {
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: false });
 
-        setTimeout( clearCanvas, 250 )
+        setTimeout( clearCanvas, 750 )
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
@@ -90,6 +92,10 @@ export const Landing = (props) => {
             'sdxl_user_image': recvSdxlUserImage,
             'sdxl_file_size': recvSdxlFilesize,
             'sdxl_progress': recvSdxlProgress,
+
+            'sdxl_generate': recvErr,
+            'sdxl_queue_update': recvSdxlQueueUpdate,
+
             'file': binSdlxFile,
         })
 
@@ -142,6 +148,18 @@ export const Landing = (props) => {
         }
     }
 
+    const recvErr = ({resp}) => {
+        console.log( resp )
+    }
+
+    const recvSdxlQueueUpdate = ({queue, queue_current}) => {
+        console.log( queue, queue_current)
+        setState(prev => ({...prev,
+            queue,
+            queue_current,
+        }))
+    }
+
     const handleChange = (e) => {
         const { id, value } = e.target
         setState(prev => ({...prev,
@@ -171,16 +189,16 @@ export const Landing = (props) => {
 
         // Check file size
         const file_mb = raw_file.size / (1024 * 1024)
-        if ( file_mb > 150 ) {
-            showToast( 'Files need to be less than 150MB', 'failure')
+        if ( file_mb > 15 ) {
+            showToast( 'Files need to be less than 15MB', 'failure')
             return
         }
-        else if ( file_mb > 100 ) {
-            showToast( 'Files larger than 100MB impacts performance', 'failure')
+        else if ( file_mb > 10 ) {
+            showToast( 'Files larger than 10MB impacts performance', 'failure')
         }
 
         //Start the upload
-        handleUpload( raw_file )
+        //handleUpload( raw_file )
         loadFileIntoCanvas( raw_file )
 
         //update the state
@@ -204,6 +222,9 @@ export const Landing = (props) => {
         image.onload = () => {
             // Draw the image on the canvas at position (0, 0)
             context.drawImage(image, 0, 0, 512, 512);
+
+            //Upload the canvas
+            handleUploadCanvas()
         };
     }
 
@@ -215,7 +236,7 @@ export const Landing = (props) => {
 
         // Check file size
         const file_mb = raw_file.size / (1024 * 1024)
-        if ( file_mb > 150 ) {
+        if ( file_mb > 15 ) {
             return
         }
 
@@ -232,10 +253,7 @@ export const Landing = (props) => {
 
         canvas.toBlob((blob) => {
             const raw_file = new File([blob], 'dirty_canvas.png', { type: 'image/png' });
-            setState(prev => ({ ...prev,
-                filename: raw_file.name,
-                raw_file,
-            }))
+            //setState(prev => ({ ...prev, filename: raw_file.name, raw_file, }))
 
             handleUpload( raw_file )
         }, 'image/png');
@@ -244,11 +262,6 @@ export const Landing = (props) => {
     const handleRunSDXL = () => {
         if ( !connected || !sdxl_loaded ) {
             showToast( 'Not connected', 'failure')
-            return;
-        }
-
-        if ( !raw_file ) {
-            showToast( 'No file selected', 'failure')
             return;
         }
 
@@ -360,8 +373,8 @@ export const Landing = (props) => {
     const color = useColorModeValue("black", "white");
     const selected_color = useColorModeValue("green", "white");
 
-    const gap = 2
-    const templateColumns = useBreakpointValue({ base: "2fr", md: `${gap}fr ${gap}fr` })
+    const gap = 6
+    const templateColumns = useBreakpointValue({ base: "2fr", md: `${gap+1}fr ${gap}fr` })
 
     if ( !connected ) {
         return (
@@ -395,15 +408,15 @@ export const Landing = (props) => {
                         <VStack align="start"
                                 spacing={3}
                                 mb={6}
-                                p={4}
+                                p={1}
                                 bg={"#f0f0f0"}
                                 height={680}
                                 borderRadius="md"
                                 boxShadow="xl"
                                 borderColor="gray.200"
                                 borderWidth={1}>
-                            <Text fontSize="lg" fontWeight="bold" color={color}>
-                                Upload your PNG or draw on canvas
+                            <Text fontSize="lg" fontWeight="bold" mt={3} ml={3} color={color}>
+                                Draw on canvas or Upload your PNG
                             </Text>
                             <input
                                 type='file'
@@ -411,7 +424,7 @@ export const Landing = (props) => {
                                 onChange={handleFileChange}
                                 style={{ display: "none" }}
                             />
-                            <HStack align="start">
+                            <HStack align="start" ml={3}>
                                 <Button onClick={handleFileClick}>
                                     Choose File
                                 </Button>
@@ -463,7 +476,9 @@ export const Landing = (props) => {
                                 {progress >= 0 &&
                                     <GridItem as="main" p={4}>
                                         <Text fontSize="sm" fontWeight="bold" color={color}>
-                                            {(progress == 0)? "Waiting to start": "Generating Image"}
+                                            {progress == 0?
+                                                ((queue > queue_current)? "Queue position "+ (queue - queue_current): "Starting render"):
+                                                "Generating Image"}
                                         </Text>
                                         <Progress width="full" hasStripe value={progress} />
                                     </GridItem>

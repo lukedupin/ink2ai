@@ -34,10 +34,10 @@ class QueueMsg:
 
         self.prompt = prompt
         self.negative = negative
-        self.cn_steps = cn_steps
-        self.cn_weight = cn_weight
-        self.cn_start = cn_start
-        self.cn_end = cn_end
+        self.cn_steps = min( max( int(cn_steps), 5 ), 50 )
+        self.cn_weight =min( max( float(cn_weight), 0.0 ), 1.0 )
+        self.cn_start = min( max( float(cn_start), 0.0 ), 1.0 )
+        self.cn_end =   min( max( float(cn_end), 0.0 ), 1.0 )
 
 
 async def getQueue():
@@ -45,6 +45,8 @@ async def getQueue():
     global queue_dict
     if queue is not None and queue_dict is not None:
         return queue, queue_dict
+
+    print("Creating Queue...")
 
     # Create a queue
     queue = asyncio.Queue()
@@ -139,9 +141,11 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
             continue
 
         # Pull the queue and update users where they currently are
-        queue_current_idx, _ = await queue_dict.take( msg.uid )
-        for _, sock in await queue_dict.keys():
-            await ws.succ_js(sock, 'sdxl_queue_exec', {'queue': queue_current_idx})
+        sock, queue_current_idx = await queue_dict.take( msg.uid )
+        await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_current_idx, 'queue_current': queue_current_idx})
+        for uid in await queue_dict.keys():
+            sock, queue_idx = await queue_dict.get( uid )
+            await ws.succ_js(sock, 'sdxl_queue_update', {'queue': queue_idx, 'queue_current': queue_current_idx})
 
         # Execute the command
         with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -150,8 +154,31 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
                 run_pipeline,  # working function that runs threaded
                 msg )  # args to pass to the function
 
-        # Return the result
-        msg.promise.set_result( image )
+        await ws.succ_js(msg, 'sdxl_progress', {'progress': -1})
+
+        if image is None:
+            continue
+
+        # Reset the progress and fail
+        if isinstance(image, str):
+            if image is None:
+                image = "Processing error"
+            await ws.fail_js(msg, 'sdxl_progress', image)
+            return
+
+        # Convert the image to bytes and get the file size
+        with BytesIO() as byte_stream:
+            image.save(byte_stream, format='PNG')
+            file_size = len(byte_stream.getvalue())
+            await ws.succ_js(msg, 'sdxl_file_size', {'file_size': file_size})
+
+            # Send the image
+            sent = 0
+            byte_stream.seek(0)
+            while sent < file_size:
+                one_megabyte = byte_stream.read(1048576)
+                await msg.sock.send_bytes(one_megabyte)
+                sent += len(one_megabyte)
 
     # Tell the asyncio.create_task -> join that we are done with the task
     queue.task_done()
@@ -169,19 +196,15 @@ async def push_queue( state, prompt: str, negative: str, cn_steps: int, cn_weigh
         await ws.fail_js(state, 'sdxl_generate', 'You already have a pending request, please wait for it to finish')
         return None
 
-    # Create a queue_msg and promise
+    # Create a queue_msg
     msg = QueueMsg( state, prompt, negative, cn_steps, cn_weight, cn_start, cn_end )
-    msg.promise = asyncio.get_running_loop().create_future()
 
     # Push the socket onto the queue
     queue_idx += 1
     await queue_dict.set( state.uid, (msg, queue_idx))
 
     # Tell the user what queue idx they are
-    await ws.succ_js(msg, 'sdxl_queue_loaded', {'queue': queue_idx, 'queue_current': queue_current_idx })
+    await ws.succ_js(msg, 'sdxl_queue_update', {'queue': queue_idx, 'queue_current': queue_current_idx })
 
     # Add the message to the queue, this will cause it to run
     await queue.put( msg )
-
-    # This will pause until the task is done
-    return await msg.promise
