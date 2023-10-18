@@ -24,6 +24,7 @@ pipeline = None
 queue = None
 queue_dict = None
 queue_idx = 0
+queue_current_idx = 0
 
 class QueueMsg:
     def __init__(self, state, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float):
@@ -128,6 +129,8 @@ def run_pipeline( state: QueueMsg ):
 
 
 async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
+    global queue_current_idx
+
     print("Queue Online and waiting for requests...")
     print("")
     while True:
@@ -136,9 +139,9 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
             continue
 
         # Pull the queue and update users where they currently are
-        code, _ = await queue_dict.take( msg.uid )
+        queue_current_idx, _ = await queue_dict.take( msg.uid )
         for _, sock in await queue_dict.keys():
-            await ws.succ_js(sock, 'sdxl_queue_exec', {'queue': code})
+            await ws.succ_js(sock, 'sdxl_queue_exec', {'queue': queue_current_idx})
 
         # Execute the command
         with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -156,6 +159,7 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
 
 async def push_queue( state, prompt: str, negative: str, cn_steps: int, cn_weight: float, cn_start: float, cn_end: float ):
     global queue_idx
+    global queue_current_idx
 
     # Get the queue
     queue, queue_dict = await getQueue()
@@ -170,11 +174,11 @@ async def push_queue( state, prompt: str, negative: str, cn_steps: int, cn_weigh
     msg.promise = asyncio.get_running_loop().create_future()
 
     # Push the socket onto the queue
-    queue_idx = queue_idx + 1
+    queue_idx += 1
     await queue_dict.set( state.uid, (msg, queue_idx))
 
     # Tell the user what queue idx they are
-    await ws.succ_js(msg, 'sdxl_queue_loaded', {'queue': queue_idx})
+    await ws.succ_js(msg, 'sdxl_queue_loaded', {'queue': queue_idx, 'queue_current': queue_current_idx })
 
     # Add the message to the queue, this will cause it to run
     await queue.put( msg )
