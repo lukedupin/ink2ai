@@ -28,38 +28,12 @@ export const Login = (props) => {
     const { phone, access_code, name_signin_valid, show_access_code } = state
 
     const handleSendAccess = () => {
-        Util.fetch_js('/api/human/request_reset_code/', { phone },
-            js => {
-                showToast('Sent', 'success')
-            },
-            showToast )
-
-        setState(prev => ({...prev,
-            access_code: "",
-            show_access_code: true,
-        }))
     }
 
     const handleCreate = () => {
-        const url = name_signin_valid ? '/api/human/name_login/' : '/api/human/login/'
-        Util.fetch_js( url, { phone, access_code },
-            js => {
-                setUsrInfo( js )
-                showToast('Online', 'success')
-                onClose( true, js )
-            },
-            showToast )
     }
 
     const handlePhoneChange = (e) => {
-        Util.fetch_js('/api/human/is_name_valid/', { name: e.target.value },
-            js => {
-                setState(prev => ({...prev,
-                    name_signin_valid: js.valid,
-                }))
-            },
-            showToast )
-
         handleChange(e)
     }
 

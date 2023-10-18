@@ -9,6 +9,7 @@ import Util from '../helpers/util';
 import { LoginType } from "../helpers/consts";
 
 import Logo from '../assets/images/logo.png'
+import Discord from '../assets/images/discord-logo-blue.png'
 
 export const Header = (props) => {
     const { showToast } = props;
@@ -53,7 +54,7 @@ export const Header = (props) => {
     let nav = []
     if ( !is_logged_in ) {
         nav = [
-            ['/', 'Home'],
+            //['/', 'Home'],
         ]
     }
     else {
@@ -96,6 +97,11 @@ export const Header = (props) => {
                                             <Link to={path} onClick={handleClose}>{name}</Link>
                                         </li>
                                     ))}
+                                    <li>
+                                        <Link to='/' onClick={handleClose}>
+                                            <img style={{ marginTop: "6px", width: '164px' }} src={Discord} alt="Discord"/>
+                                        </Link>
+                                    </li>
                                 </ul>
 
                                 <ConnectButton

@@ -381,7 +381,7 @@ export const Landing = (props) => {
             <Grid templateRows="auto 1fr" mt={36} mb={24}>
                 <GridItem as="main" p={4}>
                     <Text fontSize="lg" fontWeight="bold" color="red">
-                        Server connection error
+                        Server connection lost. Please refresh the page.
                     </Text>
                 </GridItem>
             </Grid>
@@ -600,7 +600,6 @@ export const Landing = (props) => {
                         marker_cb={ (value) => Math.floor(value) }
                         onChange={handleChange}
                     />
-
                 </VStack>
             </GridItem>
         </Grid>
