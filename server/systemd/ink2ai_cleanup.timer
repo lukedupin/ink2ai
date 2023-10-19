@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer to delete files older than 24 hours every hour
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target

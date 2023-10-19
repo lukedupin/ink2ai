@@ -157,7 +157,7 @@ SSL setup through Let's Encrypt. Assuming you're running Ubuntu 20.04+ with Apac
 Install your SSL certs
 
     # Run certbot interactively
-    sudo certbot --apache --cert-name stablediffxl.lukedupin.com -d sdxl.lukedupin.com 
+    sudo certbot --apache --cert-name ink2ai.com 
 
 Setup the apache models and config file:
 

@@ -6,4 +6,4 @@ run:
 	python -m uvicorn fast_api:app --host 0.0.0.0 --port 8081
 
 ssl:
-	sudo python -m uvicorn fast_api:app --host 0.0.0.0 --port 8081 --ssl-keyfile /etc/letsencrypt/live/ink2ai.lukedupin.com/privkey.pem --ssl-certfile /etc/letsencrypt/live/ink2ai.lukedupin.com/fullchain.pem
+	sudo python -m uvicorn fast_api:app --host 0.0.0.0 --port 8081 --ssl-keyfile /etc/letsencrypt/live/ink2ai.com/privkey.pem --ssl-certfile /etc/letsencrypt/live/ink2ai.com/fullchain.pem

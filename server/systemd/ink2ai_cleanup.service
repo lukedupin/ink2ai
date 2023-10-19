@@ -1,0 +1,8 @@
+[Unit]
+Description=Delete files older than 24 hours in a specific directory
+
+[Service]
+Type=oneshot
+ExecStart=find /var/ink2ai -mindepth 1 -type d -mmin +1440 -exec sh -c 'rm -rf "$1"' _ {} \;
+
+
