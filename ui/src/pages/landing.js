@@ -85,7 +85,7 @@ export const Landing = (props) => {
         setScrollPosition(position);
     };
     useEffect(() => {
-        window.addEventListener('resize', resizeCanvas);
+        //window.addEventListener('resize', resizeCanvas);
         window.addEventListener('scroll', handleScroll, { passive: false });
 
         setTimeout( () => {
@@ -94,7 +94,7 @@ export const Landing = (props) => {
         }, 750 )
 
         return () => {
-            window.removeEventListener('resize', resizeCanvas);
+            //window.removeEventListener('resize', resizeCanvas);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
