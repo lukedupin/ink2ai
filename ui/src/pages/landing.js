@@ -85,51 +85,19 @@ export const Landing = (props) => {
         setScrollPosition(position);
     };
     useEffect(() => {
+        window.addEventListener('resize', resizeCanvas);
         window.addEventListener('scroll', handleScroll, { passive: false });
 
-        setTimeout( () => clearCanvas(true), 750 )
+        setTimeout( () => {
+            resizeCanvas()
+            clearCanvas(true)
+        }, 750 )
 
         return () => {
+            window.removeEventListener('resize', resizeCanvas);
             window.removeEventListener('scroll', handleScroll);
         };
     }, []);
-
-    useEffect(() => {
-        function resizeCanvas() {
-            const canvas = canvasRef.current;
-            if ( canvas == null || canvasParentRef.current == null ) {
-                return
-            }
-            const ctx = canvas.getContext('2d');
-            if ( ctx == null ) {
-                return
-            }
-
-            const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
-            //console.log( width, height, window.innerWidth - left - 32 )
-
-            // Ensure that the canvas remains a square
-            const minSize = Math.min(width, height, window.innerWidth - left - 32 );
-            canvas.width = minSize;
-            canvas.height = minSize;
-
-            // You can draw on the canvas here
-            // For example, to draw a red square:
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
-
-        // Initial resize
-        resizeCanvas();
-
-        // Handle window resize
-        window.addEventListener('resize', resizeCanvas);
-
-        // Clean up event listener on unmount
-        return () => {
-            window.removeEventListener('resize', resizeCanvas);
-        };
-    }, [canvasRef.current]);
 
     useEffect(() => {
         if ( connected ) {
@@ -210,6 +178,30 @@ export const Landing = (props) => {
             queue,
             queue_current,
         }))
+    }
+
+    function resizeCanvas() {
+        const canvas = canvasRef.current;
+        if ( canvas == null || canvasParentRef.current == null ) {
+            return
+        }
+        const ctx = canvas.getContext('2d');
+        if ( ctx == null ) {
+            return
+        }
+
+        const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
+        //console.log( width, height, window.innerWidth - left - 32 )
+
+        // Ensure that the canvas remains a square
+        const minSize = Math.min(width, height - 128, window.innerWidth - left - 32 );
+        canvas.width = minSize;
+        canvas.height = minSize;
+
+        // You can draw on the canvas here
+        // For example, to draw a red square:
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     const handleChange = (e) => {
