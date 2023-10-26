@@ -544,8 +544,6 @@ export const Landing = (props) => {
                                 <canvas
                                     style={{touchAction: 'none'}}
                                     ref={canvasRef}
-                                    width="512"
-                                    height="512"
                                     onMouseUp={stopDrawing}
                                     onMouseMove={drawCanvas}
                                     onMouseDown={startDrawing}
