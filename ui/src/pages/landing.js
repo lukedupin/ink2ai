@@ -112,7 +112,7 @@ export const Landing = (props) => {
             setXXX( `${width} ${height} ${window.innerWidth - left - 32}` )
 
             // Ensure that the canvas remains a square
-            const minSize = Math.min(width, height, window.innerWidth - left - 16 );
+            const minSize = Math.min(width, height, window.innerWidth - left - 32 );
             canvas.width = minSize;
             canvas.height = minSize;
 
