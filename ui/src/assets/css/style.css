@@ -1053,3 +1053,15 @@ pre.ui-coordinates {
 .abstract-search-container {
     width: 600px;
 }
+
+/* Default style to hide the element */
+.genb {
+    display: none;
+}
+
+/* Media query to show the element on screens with a maximum width of 768px */
+@media (max-width: 768px) {
+    .genb {
+        display: block; /* Show the element on smaller screens */
+    }
+}

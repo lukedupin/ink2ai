@@ -73,6 +73,9 @@ export const Landing = (props) => {
     const fileRef = React.useRef();
 
     const canvasRef = useRef(null);
+    const canvasParentRef = useRef(null);
+    const generateRef = useRef(null);
+
     const [isDrawing, setIsDrawing] = useState(false);
 
 
@@ -94,13 +97,17 @@ export const Landing = (props) => {
     useEffect(() => {
         function resizeCanvas() {
             const canvas = canvasRef.current;
-            if ( canvas == null ) {
+            if ( canvas == null || canvasParentRef.current == null ) {
                 return
             }
             const ctx = canvas.getContext('2d');
+            if ( ctx == null ) {
+                return
+            }
 
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.width = canvasParentRef.current.getBoundingClientRect().width
+            canvas.height = canvasParentRef.current.getBoundingClientRect().height
+            console.log( canvas.width, canvas.height)
 
             // Ensure that the canvas remains a square
             const minSize = Math.min(canvas.width, canvas.height);
@@ -109,7 +116,7 @@ export const Landing = (props) => {
 
             // You can draw on the canvas here
             // For example, to draw a red square:
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
@@ -216,7 +223,7 @@ export const Landing = (props) => {
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
             event.preventDefault(); // Prevent the default "Enter" behavior (line break)
-            handleRunSDXL()
+            handleRunSDXL( true )
         }
     };
 
@@ -312,10 +319,15 @@ export const Landing = (props) => {
         }, 'image/png');
     }
 
-    const handleRunSDXL = () => {
+    const handleRunSDXL = ( scroll ) => {
         if ( !connected || !sdxl_loaded ) {
             showToast( 'Not connected', 'failure')
             return;
+        }
+
+        //Bring the generating image into view
+        if ( scroll ) {
+            scrollToGen()
         }
 
         Util.sendWS( socket, 'sdxl_generate', {
@@ -362,6 +374,23 @@ export const Landing = (props) => {
         }
     };
 
+    const scrollToGen = () => {
+        const element = generateRef.current;
+        if ( element == null ) {
+            return
+        }
+
+        // Scroll to the top of the element (vertical scroll)
+        element.scrollIntoView({
+            behavior: 'smooth', // You can use 'auto' for instant scrolling
+            block: 'center',     // 'start', 'center', or 'end' to control vertical alignment
+            inline: 'nearest',  // 'start', 'center', or 'end' to control horizontal alignment
+        });
+
+        // Scroll to the left of the element (horizontal scroll)
+        // element.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    }
+
     const getClientXY = (e) => {
         let { clientX, clientY } = e
         if ( 'touches' in e ) {
@@ -397,7 +426,7 @@ export const Landing = (props) => {
             clean_img: false,
         }))
 
-        e.preventDefault()
+        //e.preventDefault()
     };
 
     const drawCanvas = (e) => {
@@ -415,7 +444,7 @@ export const Landing = (props) => {
         );
         context.stroke();
 
-        e.preventDefault()
+        //e.preventDefault()
     };
 
     const stopDrawing = (e) => {
@@ -477,7 +506,6 @@ export const Landing = (props) => {
                                 spacing={3}
                                 mb={6}
                                 p={1}
-                                display={show_discord? 'none': ''}
                                 bg={"#f0f0f0"}
                                 height={680}
                                 borderRadius="md"
@@ -494,6 +522,14 @@ export const Landing = (props) => {
                                 style={{ display: "none" }}
                             />
                             <HStack align="start" ml={3}>
+                                <Button
+                                    className='genb'
+                                    algin="start"
+                                    height={40}
+                                    variant="primary"
+                                    onClick={() => handleRunSDXL(true)}>
+                                    Generate
+                                </Button>
                                 <Button onClick={handleFileClick}>
                                     Choose File
                                 </Button>
@@ -501,7 +537,7 @@ export const Landing = (props) => {
                                     Clear
                                 </Button>
                             </HStack>
-                            <Box boxSize='sm'>
+                            <Box boxSize='sm' ref={canvasParentRef}>
                                 <canvas
                                     style={{touchAction: 'none'}}
                                     ref={canvasRef}
@@ -535,10 +571,11 @@ export const Landing = (props) => {
                                 borderColor="gray.200"
                                 borderWidth={1}>
                             <Button
+                                ref={generateRef}
                                 algin="start"
                                 height={40}
                                 variant="primary"
-                                onClick={handleRunSDXL}>
+                                onClick={() => handleRunSDXL(false)}>
                                 Generate Image
                             </Button>
                             <VStack height={640} width={"full"}>
