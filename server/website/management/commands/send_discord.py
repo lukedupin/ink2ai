@@ -25,7 +25,7 @@ class Command(BaseCommand):
         msg = [
             f"Prompt: {js['prompt']}",
             f"Negative: {js['negative'][n_len:]}",
-            f"Weight: {js['cn_steps']}\nStart: {js['cn_start']}%\nEnd: {js['cn_end']}%",
+            f"Weight: {js['cn_weight']}\nStart: {js['cn_start']}%\nEnd: {js['cn_end']}%",
         ]
 
         discord_local.send_img( '\n\n'.join(msg), path )
