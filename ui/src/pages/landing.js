@@ -94,6 +94,8 @@ export const Landing = (props) => {
         };
     }, []);
 
+    const [xxx, setXXX] = useState(0);
+
     useEffect(() => {
         function resizeCanvas() {
             const canvas = canvasRef.current;
@@ -106,6 +108,8 @@ export const Landing = (props) => {
             }
 
             const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
+            console.log( width, height, window.innerWidth - left - 16 )
+            setXXX( `${width} ${height} ${window.innerWidth - left - 16}` )
 
             // Ensure that the canvas remains a square
             const minSize = Math.min(width, height, window.innerWidth - left - 16 );
@@ -511,6 +515,7 @@ export const Landing = (props) => {
                                 borderColor="gray.200"
                                 borderWidth={1}>
                             <Text fontSize="lg" fontWeight="bold" mt={3} ml={3} color={color}>
+                                {xxx}
                                 Draw on canvas or Upload your PNG
                             </Text>
                             <input
