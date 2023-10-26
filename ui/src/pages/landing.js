@@ -108,11 +108,11 @@ export const Landing = (props) => {
             }
 
             const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
-            console.log( width, height, window.innerWidth - left - 32 )
-            setXXX( `${width} ${height} ${window.innerWidth - left - 32}` )
+            console.log( width, height, window.innerWidth - left - 48 )
+            setXXX( `${width} ${height} ${window.innerWidth - left - 48}` )
 
             // Ensure that the canvas remains a square
-            const minSize = Math.min(width, height, window.innerWidth - left - 32 );
+            const minSize = Math.min(width, height, window.innerWidth - left - 48 );
             canvas.width = minSize;
             canvas.height = minSize;
 
@@ -533,7 +533,10 @@ export const Landing = (props) => {
                                     onClick={() => handleRunSDXL(true)}>
                                     Generate
                                 </Button>
-                                <Button onClick={handleFileClick}>
+                                <Button className='genb' onClick={handleFileClick}>
+                                    File
+                                </Button>
+                                <Button className='genbi' onClick={handleFileClick}>
                                     Choose File
                                 </Button>
                                 <Button onClick={clearCanvas}>

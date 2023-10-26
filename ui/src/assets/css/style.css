@@ -1065,3 +1065,15 @@ pre.ui-coordinates {
         display: block; /* Show the element on smaller screens */
     }
 }
+
+/* Default style to hide the element */
+.genbi {
+    display: block;
+}
+
+/* Media query to show the element on screens with a maximum width of 768px */
+@media (max-width: 768px) {
+    .genbi {
+        display: none; /* Show the element on smaller screens */
+    }
+}
