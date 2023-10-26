@@ -531,7 +531,7 @@ export const Landing = (props) => {
                                 <Button className='genbi' onClick={handleFileClick}>
                                     Choose File
                                 </Button>
-                                <Button onClick={clearCanvas}>
+                                <Button onClick={() => clearCanvas(false)}>
                                     Clear
                                 </Button>
                             </HStack>
