@@ -108,8 +108,8 @@ export const Landing = (props) => {
             }
 
             const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
-            console.log( width, height, window.innerWidth - left - 16 )
-            setXXX( `${width} ${height} ${window.innerWidth - left - 16}` )
+            console.log( width, height, window.innerWidth - left - 32 )
+            setXXX( `${width} ${height} ${window.innerWidth - left - 32}` )
 
             // Ensure that the canvas remains a square
             const minSize = Math.min(width, height, window.innerWidth - left - 16 );
