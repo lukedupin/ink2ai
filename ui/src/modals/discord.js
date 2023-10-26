@@ -59,7 +59,7 @@ export const Discord = (props) => {
                         <div className="px-3 p-md-5 mx-md-4" style={{ width: '100%' }}>
                             <h4 className="mb-4 login-title">
                                 <img src={Logo} alt="Been There" style={{ width: '48px' }}/>
-                                Please Join
+                                Consider Joining
                                 <div style={{ width: '48px' }}></div>
                             </h4>
                             <div className="row g-4">

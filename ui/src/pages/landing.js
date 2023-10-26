@@ -84,7 +84,7 @@ export const Landing = (props) => {
     useEffect(() => {
         window.addEventListener('scroll', handleScroll, { passive: false });
 
-        setTimeout( clearCanvas, 750 )
+        setTimeout( () => clearCanvas(true), 750 )
 
         return () => {
             window.removeEventListener('scroll', handleScroll);
@@ -92,6 +92,44 @@ export const Landing = (props) => {
     }, []);
 
     useEffect(() => {
+        function resizeCanvas() {
+            const canvas = canvasRef.current;
+            if ( canvas == null ) {
+                return
+            }
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Ensure that the canvas remains a square
+            const minSize = Math.min(canvas.width, canvas.height);
+            canvas.width = minSize;
+            canvas.height = minSize;
+
+            // You can draw on the canvas here
+            // For example, to draw a red square:
+            ctx.fillStyle = 'red';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Initial resize
+        resizeCanvas();
+
+        // Handle window resize
+        window.addEventListener('resize', resizeCanvas);
+
+        // Clean up event listener on unmount
+        return () => {
+            window.removeEventListener('resize', resizeCanvas);
+        };
+    }, [canvasRef.current]);
+
+    useEffect(() => {
+        if ( connected ) {
+            return
+        }
+
         const _socket = connectWS( `${WS_URL}/ws/stable_diff_xl`, setSocket, {
             'sdxl_ready': recvSdxlReady,
             'sdxl_user_image': recvSdxlUserImage,
@@ -116,8 +154,8 @@ export const Landing = (props) => {
             setState(prev => ({ ...prev, connected: false }))
         }
 
-        return closeWS( socket )
-    }, []);
+        //return closeWS( _socket )
+    }, [connected]);
 
     const recvSdxlReady = () => {
         setState(prev => ({ ...prev, sdxl_loaded: true }))
@@ -174,6 +212,13 @@ export const Landing = (props) => {
             [id]: value
         }))
     }
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent the default "Enter" behavior (line break)
+            handleRunSDXL()
+        }
+    };
 
     //Funky pass through to open the file browse
     const handleFileClick = () => {
@@ -295,7 +340,7 @@ export const Landing = (props) => {
         showToast("Sending to Discord", "success")
     }
 
-    const clearCanvas = () => {
+    const clearCanvas = ( first_run ) => {
         const canvas = canvasRef.current;
         if ( canvas == null ) {
             return
@@ -311,6 +356,9 @@ export const Landing = (props) => {
             setState(prev => ({ ...prev,
                 clean_img: true,
             }))
+        }
+        else if ( !first_run ) {
+            handleUploadCanvas()
         }
     };
 
@@ -548,6 +596,7 @@ export const Landing = (props) => {
                                 id={id}
                                 value={state[id]}
                                 onChange={handleChange}
+                                onKeyDown={handleKeyDown}
                                 />
                         </VStack>
                     </GridItem>
