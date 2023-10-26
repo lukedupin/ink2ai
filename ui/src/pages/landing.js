@@ -94,8 +94,6 @@ export const Landing = (props) => {
         };
     }, []);
 
-    const [xxx, setXXX] = useState(0);
-
     useEffect(() => {
         function resizeCanvas() {
             const canvas = canvasRef.current;
@@ -108,11 +106,10 @@ export const Landing = (props) => {
             }
 
             const {left, width, height } = canvasParentRef.current.getBoundingClientRect()
-            console.log( width, height, window.innerWidth - left - 48 )
-            setXXX( `${width} ${height} ${window.innerWidth - left - 48}` )
+            //console.log( width, height, window.innerWidth - left - 32 )
 
             // Ensure that the canvas remains a square
-            const minSize = Math.min(width, height, window.innerWidth - left - 48 );
+            const minSize = Math.min(width, height, window.innerWidth - left - 32 );
             canvas.width = minSize;
             canvas.height = minSize;
 
@@ -505,6 +502,7 @@ export const Landing = (props) => {
                 <Grid templateColumns={templateColumns} gap={6}>
                     <GridItem>
                         <VStack align="start"
+                                ref={canvasParentRef}
                                 spacing={3}
                                 mb={6}
                                 p={1}
@@ -515,7 +513,6 @@ export const Landing = (props) => {
                                 borderColor="gray.200"
                                 borderWidth={1}>
                             <Text fontSize="lg" fontWeight="bold" mt={3} ml={3} color={color}>
-                                {xxx}
                                 Draw on canvas or Upload your PNG
                             </Text>
                             <input
@@ -543,21 +540,19 @@ export const Landing = (props) => {
                                     Clear
                                 </Button>
                             </HStack>
-                            <Box boxSize='sm' ref={canvasParentRef}>
-                                <canvas
-                                    style={{touchAction: 'none'}}
-                                    ref={canvasRef}
-                                    onMouseUp={stopDrawing}
-                                    onMouseMove={drawCanvas}
-                                    onMouseDown={startDrawing}
-                                    onMouseLeave={stopDrawing}
+                            <canvas
+                                style={{touchAction: 'none'}}
+                                ref={canvasRef}
+                                onMouseUp={stopDrawing}
+                                onMouseMove={drawCanvas}
+                                onMouseDown={startDrawing}
+                                onMouseLeave={stopDrawing}
 
-                                    onTouchStart={startDrawing}
-                                    onTouchMove={drawCanvas}
-                                    onTouchCancel={stopDrawing}
-                                    onTouchEnd={stopDrawing}
-                                    />
-                            </Box>
+                                onTouchStart={startDrawing}
+                                onTouchMove={drawCanvas}
+                                onTouchCancel={stopDrawing}
+                                onTouchEnd={stopDrawing}
+                                />
                         </VStack>
                     </GridItem>
 
