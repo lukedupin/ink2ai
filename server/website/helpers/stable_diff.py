@@ -7,8 +7,6 @@ from django.db.utils import IntegrityError
 
 from website.helpers import ws, util
 
-import io
-
 from diffusers import StableDiffusionControlNetPipeline, ControlNetModel, UniPCMultistepScheduler
 from diffusers import StableDiffusionXLControlNetPipeline, ControlNetModel, AutoencoderKL
 from diffusers.utils import load_image
@@ -17,13 +15,14 @@ from io import BytesIO
 import asyncio, concurrent.futures, torch
 from django.conf import settings
 
-import cv2, os, json
+import cv2, os, json, signal
 from PIL import Image
 
 from website.helpers.async_safe_dict import AsyncSafeDict
 
 # Global variables
 pipeline = None
+task = None
 queue = None
 queue_dict = None
 queue_idx = 0
@@ -44,18 +43,19 @@ class QueueMsg:
 
 
 async def getQueue():
+    global task
     global queue
     global queue_dict
-    if queue is not None and queue_dict is not None:
-        return queue, queue_dict
+    if task is not None and queue is not None and queue_dict is not None:
+        return task, queue, queue_dict
 
     print("Creating Queue...")
 
     # Create a queue
     queue = asyncio.Queue()
     queue_dict = AsyncSafeDict()
-    asyncio.create_task( processQueue(queue, queue_dict) )
-    return queue, queue_dict
+    task = asyncio.create_task( processQueue(queue, queue_dict) )
+    return task, queue, queue_dict
 
 
 def getPipeline():
@@ -220,7 +220,13 @@ async def push_queue( state, prompt: str, negative: str, cn_steps: int, cn_weigh
     global queue_current_idx
 
     # Get the queue
-    queue, queue_dict = await getQueue()
+    task, queue, queue_dict = await getQueue()
+
+    # Kill the task if it is done
+    if task.done():
+        print("attempting to kill the task so we restart")
+        os.kill(os.getpid(), signal.SIGINT)
+        return
 
     # Block updates if the user already has pending request
     if await queue_dict.contains( state.uid ):
