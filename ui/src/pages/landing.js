@@ -216,9 +216,9 @@ export const Landing = (props) => {
 
     const handleKeyDown = (event) => {
         if (event.key === 'Enter') {
+            handleRunSDXL( true )
             event.preventDefault(); // Prevent the default "Enter" behavior (line break)
             event.target.blur()
-            handleRunSDXL( true )
         }
     };
 
