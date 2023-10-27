@@ -105,11 +105,21 @@ async def succ_js( state, ep, resp ):
 
     except ConnectionClosedError as e:
         return
+    except Exception as e:
+        warnings.warn(f"Unknown exception: {e}")
+        return
 
 
 async def fail_js( state, ep, resp ):
-    await state.sock.send_json({
-        'ep': ep,
-        'succ': False,
-        'resp': resp
-    })
+    try:
+        await state.sock.send_json({
+            'ep': ep,
+            'succ': False,
+            'resp': resp
+        })
+
+    except ConnectionClosedError as e:
+        return
+    except Exception as e:
+        warnings.warn(f"Unknown exception: {e}")
+        return
