@@ -218,7 +218,7 @@ export const Landing = (props) => {
         if (event.key === 'Enter') {
             handleRunSDXL( true )
             event.preventDefault(); // Prevent the default "Enter" behavior (line break)
-            setTimeout( () => event.target.blur(), 100 )
+            setTimeout( () => event.target.blur(), 1000 )
         }
     };
 
