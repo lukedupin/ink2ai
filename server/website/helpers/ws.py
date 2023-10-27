@@ -123,3 +123,14 @@ async def fail_js( state, ep, resp ):
     except Exception as e:
         warnings.warn(f"Unknown exception: {e}")
         return
+
+
+async def send_bytes( state, data ):
+    try:
+        await state.sock.send_bytes(data)
+
+    except ConnectionClosedError as e:
+        return
+    except Exception as e:
+        warnings.warn(f"Unknown exception: {e}")
+        return

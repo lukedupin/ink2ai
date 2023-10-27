@@ -205,7 +205,7 @@ async def processQueue( queue: asyncio.Queue, queue_dict: AsyncSafeDict ):
             byte_stream.seek(0)
             while sent < file_size:
                 one_megabyte = byte_stream.read(1048576)
-                await msg.sock.send_bytes(one_megabyte)
+                await ws.send_bytes( msg, one_megabyte )
                 sent += len(one_megabyte)
 
         sock, queue_current_idx = await queue_dict.take( msg.uid )
