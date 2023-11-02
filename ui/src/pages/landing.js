@@ -276,7 +276,7 @@ export const Landing = (props) => {
 
         image.onload = () => {
             // Draw the image on the canvas at position (0, 0)
-            context.drawImage(image, 0, 0, 512, 512);
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
             //Upload the canvas
             handleUploadCanvas()
