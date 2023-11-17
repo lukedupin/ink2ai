@@ -197,14 +197,14 @@ Reset the user's postgres password. Restart the services. Confirm postgres is li
 Note the scripts assuming your installation location is /opt/patent
 
     cd /opt/patent/server/systemd
-    sudo cp fast_api.* /etc/systemd/system
+    sudo cp ink2ai.* /etc/systemd/system
 
 # Configuring the scripts
 
 Below will start the script timers, and configure the timers to run on-boot
 
-    sudo systemctl start fast_api
-    sudo systemctl enable fast_api
+    sudo systemctl start ink2ai
+    sudo systemctl enable ink2ai
 
 
 ## Development
