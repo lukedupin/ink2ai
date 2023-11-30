@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.utils.timezone import utc
 
-from tzwhere import tzwhere
+#from tzwhere import tzwhere
 
 import datetime, math, re, pytz, base64, uuid, hashlib
 
@@ -120,8 +120,8 @@ def cap( val, high, low=None ):
 
 
 # Careful, this is SUPER SLOW
-def calculateTimezone( lat, lng ):
-    return tzwhere.tzwhere().tzNameAt( lat, lng )
+#def calculateTimezone( lat, lng ):
+#    return tzwhere.tzwhere().tzNameAt( lat, lng )
 
 
 # Provide a timezone
