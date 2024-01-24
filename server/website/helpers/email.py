@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.utils.timezone import utc
 from python_http_client import BadRequestsError, UnauthorizedError
 
 from sendgrid import SendGridAPIClient

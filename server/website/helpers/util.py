@@ -1,9 +1,4 @@
-from django.conf import settings
-from django.utils.timezone import utc
-
-#from tzwhere import tzwhere
-
-import datetime, math, re, pytz, base64, uuid, hashlib
+import datetime, math, re, pytz, uuid, hashlib
 
 
 def xlist( ary ):
@@ -126,14 +121,15 @@ def cap( val, high, low=None ):
 
 # Provide a timezone
 def toTimezone( tz=None ):
-    timezone = utc
-    if tz is not None:
-        try:
-            timezone = pytz.timezone(str(tz))
-        except pytz.UnknownTimeZoneError:
-            pass
+    if tz is None:
+        tz = 'UTC'
 
-    return timezone
+    try:
+        return pytz.timezone(str(tz))
+    except pytz.UnknownTimeZoneError:
+        pass
+
+    return None
 
 
 # Return the hour differnce between two timezones
@@ -153,7 +149,7 @@ def timeNow( ms=None, tz=None ):
 
 # Get a time prior to any possible question
 def timeBeginning():
-    return datetime.datetime(2021, 1, 1, tzinfo=utc)
+    return datetime.datetime(2021, 1, 1, tzinfo='UTC')
 
 
 # Convert a time to different timezone
@@ -218,7 +214,7 @@ def timeToYear( year, now=None ):
 
 
 def daysToTime( days ):
-    return datetime.datetime(1970, 1, 1, tzinfo=utc) + datetime.timedelta(days=days)
+    return datetime.datetime(1970, 1, 1, tzinfo='UTC') + datetime.timedelta(days=days)
 
 
 def unixToDays( unix=None ):
@@ -330,12 +326,16 @@ def weekOfMonth( ts ):
 
 
 # Generate reset code
-def hash_code():
+def hash_code(msg=None):
     # Create the reset code
     m = hashlib.sha256()
-    m.update(b"A super important message that must happen")
-    m.update(bytes(str(unixNow()), 'utf-8'))
-    m.update(bytes(str(uuid.uuid4()), 'utf-8'))
+    if msg is None:
+        m.update(b"A super important message that must happen")
+        m.update(bytes(str(unixNow()), 'utf-8'))
+        m.update(bytes(str(uuid.uuid4()), 'utf-8'))
+
+    else:
+        m.update(bytes(msg, 'utf-8'))
 
     # Save the pwd reset code
     return m.hexdigest()
